@@ -50,7 +50,8 @@ Interprétation des potards du haut (non documentée par le fabricant) : MASTER 
 ## Interface
 
 - Fenêtre ouverte à **661 × 495** (taille de Ring Think), impossible de la réduire en dessous, proportions bloquées.
-  Clic droit > *Window size* : défaut / 75 % / 100 % (993 × 743).
+  Clic droit > *Plugin size* : 60 % / 75 % / 100 % (taille actuelle cochée, « (default) » à côté de la taille par défaut) ;
+  *Plugin size > Default size (new windows)* : taille d'ouverture des nouvelles fenêtres, mémorisée pour toutes les instances (comme Octopus) et appliquée tout de suite.
 - **Barre de presets** : flèches = précédent / suivant, clic sur le nom = menu (10 presets d'usine, presets utilisateur 1 à 9).
 - **Ligne d'état** : réglage de la commande que l'on bouge (potards en %), dans la police manuscrite des inscriptions de la pédale (Shadows Into Light).
 - Potards : seul le repère blanc peint tourne, les reflets du biseau chromé restent fixes (lumière en haut à gauche).
@@ -96,3 +97,4 @@ la table ci-dessus. Les assignations sont sauvegardées avec le projet.
 
 - v1.4.1 : menu de taille de fenêtre : « 60 % (default) », 75 %, 100 % (plus de taille en pixels)
 - v1.5.0 : MIDI Learn au clic droit sur chaque commande (Clear MIDI, assignations sauvegardées avec le projet)
+- v1.6.0 : clic droit > Plugin size > Default size (new windows) : taille par défaut des nouvelles fenêtres au choix, comme dans Octopus
