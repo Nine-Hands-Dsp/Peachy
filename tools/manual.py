@@ -1,5 +1,7 @@
 # PEACHY (Studio Wiga) - notice PDF bilingue (anglais puis francais), illustree avec le rendu reel du plugin.
-# Usage : python3 tools/manual.py <dossier des captures (tools/render)> <fichier PDF de sortie>
+# Usage : python3 tools/manual.py [<dossier des captures (tools/render)>] <fichier PDF de sortie>
+#   avec captures : recompose les images et les copie dans tools/manual_assets/ ;
+#   sans captures : reprend les images composees de tools/manual_assets/ (extraites de la notice precedente).
 import os, sys
 import numpy as np
 from PIL import Image, ImageDraw, ImageFont
@@ -14,9 +16,9 @@ from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.ttfonts import TTFont
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-SHOTS = sys.argv[1]
-OUT = sys.argv[2]
-VERSION = "1.5.0"
+SHOTS = sys.argv[1] if len(sys.argv) > 2 else None
+OUT = sys.argv[-1]
+VERSION = "1.6.1"
 TMP = os.path.dirname(os.path.abspath(OUT))
 FONTS = os.path.join(ROOT, "assets", "fonts")
 for n, f in (("Pop", "Poppins-Regular"), ("PopL", "Poppins-Light"), ("PopM", "Poppins-Medium"), ("PopB", "Poppins-Bold")):
@@ -37,76 +39,84 @@ PR = 43.0
 JACK_OUT_X = float(re.search(r'jackOutX = ([\d.]+)f', LAY).group(1)); JACK_IN_X = float(re.search(r'jackInX = ([\d.]+)f', LAY).group(1))
 JACK_Y = float(re.search(r'jackY = ([\d.]+)f', LAY).group(1))
 
-src = Image.open(os.path.join(SHOTS, "peachy_status.png")).convert("RGB")
-k = src.height / 928.0
+ASSETS = os.path.join(ROOT, "tools", "manual_assets")
+NAMES = ["peachy_annotated.png", "peachy_octave.png", "peachy_leds.png", "peachy_bar.png", "peachy_cover_cutout.png"]
+if SHOTS:
+    src = Image.open(os.path.join(SHOTS, "peachy_status.png")).convert("RGB")
+    k = src.height / 928.0
 
-# ---------- capture annotee ----------
-marks = [(1, *KP[0]), (2, *KP[1]), (3, *KP[2]), (4, *KP[3]), (5, *KP[4]), (6, *KP[5]), (7, *KP[6]), (8, *KP[7]),
-         (9, *PRES), (10, *OCT), (11, *LEDL), (12, *LEDR), (13, *FSL), (14, *FSR), (15, 620, 693), (16, 620, 767),
-         (17, JACK_IN_X, JACK_Y + 24), (18, JACK_OUT_X, JACK_Y + 24)]
-off = {1: (-70, 0), 2: (-70, 0), 3: (-70, 0), 4: (-70, 0), 5: (-70, 0), 6: (-70, 0), 7: (-70, 0), 8: (-70, 0), 9: (-45, 0),
-       10: (48, 0), 11: (0, -36), 12: (0, -36), 13: (-80, 0), 14: (80, 0), 15: (-252, 0), 16: (-232, 0), 17: (78, 0), 18: (-78, 0)}
-ann = src.copy(); dr = ImageDraw.Draw(ann)
-fnt = ImageFont.truetype(os.path.join(FONTS, "Poppins-Bold.ttf"), int(26 * k))
-for n, x, y in marks:
-    ox, oy = off[n]
-    cx, cy, r = (x + ox) * k, (y + oy) * k, 20 * k
-    dr.ellipse((cx - r, cy - r, cx + r, cy + r), fill=(255, 255, 255), outline=(216, 38, 44), width=int(4 * k))
-    dr.text((cx, cy + 1), str(n), font=fnt, fill=(26, 21, 22), anchor="mm")
-annotated = os.path.join(TMP, "peachy_annotated.png"); ann.save(annotated)
+    # ---------- capture annotee ----------
+    marks = [(1, *KP[0]), (2, *KP[1]), (3, *KP[2]), (4, *KP[3]), (5, *KP[4]), (6, *KP[5]), (7, *KP[6]), (8, *KP[7]),
+             (9, *PRES), (10, *OCT), (11, *LEDL), (12, *LEDR), (13, *FSL), (14, *FSR), (15, 620, 693), (16, 620, 767),
+             (17, JACK_IN_X, JACK_Y + 24), (18, JACK_OUT_X, JACK_Y + 24)]
+    off = {1: (-70, 0), 2: (-70, 0), 3: (-70, 0), 4: (-70, 0), 5: (-70, 0), 6: (-70, 0), 7: (-70, 0), 8: (-70, 0), 9: (-45, 0),
+           10: (48, 0), 11: (0, -36), 12: (0, -36), 13: (-80, 0), 14: (80, 0), 15: (-252, 0), 16: (-232, 0), 17: (78, 0), 18: (-78, 0)}
+    ann = src.copy(); dr = ImageDraw.Draw(ann)
+    fnt = ImageFont.truetype(os.path.join(FONTS, "Poppins-Bold.ttf"), int(26 * k))
+    for n, x, y in marks:
+        ox, oy = off[n]
+        cx, cy, r = (x + ox) * k, (y + oy) * k, 20 * k
+        dr.ellipse((cx - r, cy - r, cx + r, cy + r), fill=(255, 255, 255), outline=(216, 38, 44), width=int(4 * k))
+        dr.text((cx, cy + 1), str(n), font=fnt, fill=(26, 21, 22), anchor="mm")
+    annotated = os.path.join(TMP, "peachy_annotated.png"); ann.save(annotated)
 
-def crop_u(path, box):
-    im = Image.open(os.path.join(SHOTS, path)).convert("RGB")
-    kk = im.height / 928.0
-    return im.crop(tuple(int(v * kk) for v in box))
-gap = 18
-def strip(ims, name):
-    s = Image.new("RGB", (sum(m.width for m in ims) + gap * (len(ims) - 1), ims[0].height), (255, 255, 255))
-    x = 0
-    for m in ims: s.paste(m, (x, 0)); x += m.width + gap
-    p = os.path.join(TMP, name); s.save(p); return p
-# octave off / on ; LED + footswitch off / on
-ob = (OCT[0] - 80, OCT[1] - 84, OCT[0] + 80, OCT[1] + 60)
-oct_img = strip([crop_u("peachy_off.png", ob), crop_u("peachy_both.png", ob)], "peachy_octave.png")
-lb = (LEDL[0] - 110, LEDL[1] - 60, LEDL[0] + 110, FSL[1] + 70)
-led_img = strip([crop_u("peachy_off.png", lb), crop_u("peachy_both.png", lb)], "peachy_leds.png")
-bar = crop_u("peachy_status.png", (380, 650, 860, 808))
-bar_img = os.path.join(TMP, "peachy_bar.png"); bar.save(bar_img)
+    def crop_u(path, box):
+        im = Image.open(os.path.join(SHOTS, path)).convert("RGB")
+        kk = im.height / 928.0
+        return im.crop(tuple(int(v * kk) for v in box))
+    gap = 18
+    def strip(ims, name):
+        s = Image.new("RGB", (sum(m.width for m in ims) + gap * (len(ims) - 1), ims[0].height), (255, 255, 255))
+        x = 0
+        for m in ims: s.paste(m, (x, 0)); x += m.width + gap
+        p = os.path.join(TMP, name); s.save(p); return p
+    # octave off / on ; LED + footswitch off / on
+    ob = (OCT[0] - 80, OCT[1] - 84, OCT[0] + 80, OCT[1] + 60)
+    oct_img = strip([crop_u("peachy_off.png", ob), crop_u("peachy_both.png", ob)], "peachy_octave.png")
+    lb = (LEDL[0] - 110, LEDL[1] - 60, LEDL[0] + 110, FSL[1] + 70)
+    led_img = strip([crop_u("peachy_off.png", lb), crop_u("peachy_both.png", lb)], "peachy_leds.png")
+    bar = crop_u("peachy_status.png", (380, 650, 860, 808))
+    bar_img = os.path.join(TMP, "peachy_bar.png"); bar.save(bar_img)
 
-# ---------- couverture : pedale detouree, reflet au sol, halo rouge tres doux ----------
-shot = Image.open(os.path.join(SHOTS, "peachy_both.png")).convert("RGB")
-kk = shot.height / 928.0
-mk = Image.new("L", shot.size, 0); md = ImageDraw.Draw(mk)
-md.rounded_rectangle((PX0 * kk, PY0 * kk, (PX0 + PW) * kk, (PY0 + PH) * kk), radius=PR * kk, fill=255)
-for jx in (JACK_OUT_X, JACK_IN_X):
-    md.rectangle(((jx - 58) * kk, max(0.0, JACK_Y - 16) * kk, (jx + 58) * kk, PY0 * kk + 2), fill=255)
-arr = np.asarray(shot).astype(np.float32).mean(-1)
-m = np.asarray(mk).astype(np.float32)
-body = Image.new("L", shot.size, 0); ImageDraw.Draw(body).rounded_rectangle((PX0 * kk, PY0 * kk, (PX0 + PW) * kk, (PY0 + PH) * kk), radius=PR * kk, fill=255)
-bm = np.asarray(body).astype(np.float32)
-m = np.where(bm > 0, bm, m * (arr > 60))          # jacks : seulement le metal (pas le fond sombre)
-from PIL import ImageFilter
-mk = Image.fromarray(m.astype(np.uint8)).filter(ImageFilter.GaussianBlur(1.2))
-cut = Image.new("RGBA", shot.size, (0, 0, 0, 0)); cut.paste(shot, (0, 0), mk)
-cut = cut.crop(cut.getbbox())
-cw, ch = cut.size
-pad = int(cw * 0.14)
-canvas = Image.new("RGBA", (cw + 2 * pad, int(ch * 1.30) + pad), (0, 0, 0, 255))
-yy, xx = np.mgrid[0:canvas.height, 0:canvas.width].astype(np.float64)
-gcx, gcy = canvas.width / 2, pad + ch * 0.45
-glow = np.exp(-(((xx - gcx) / (cw * 0.62)) ** 2 + ((yy - gcy) / (ch * 0.48)) ** 2)) * 40
-edge = np.clip(np.minimum.reduce([xx, canvas.width - 1 - xx, yy, canvas.height - 1 - yy]) / (pad * 0.9), 0, 1)
-glow *= edge ** 2
-halo = np.dstack([glow * 0.95, glow * 0.12, glow * 0.12, np.full_like(glow, 255)]).astype(np.uint8)
-canvas = Image.alpha_composite(canvas, Image.fromarray(halo, "RGBA"))
-refl = cut.transpose(Image.FLIP_TOP_BOTTOM)
-ra = np.array(refl).astype(np.float64)
-fade = np.clip(1 - np.arange(refl.height) / (refl.height * 0.22), 0, 1) ** 1.6 * 0.22
-ra[..., 3] *= fade[:, None]
-canvas.alpha_composite(Image.fromarray(ra.astype(np.uint8), "RGBA"), (pad, pad + ch + 6))
-canvas.alpha_composite(cut, (pad, pad))
-canvas = canvas.crop((0, 0, canvas.width, pad + int(ch * 1.20)))
-cover = os.path.join(TMP, "peachy_cover_cutout.png"); canvas.convert("RGB").save(cover)
+    # ---------- couverture : pedale detouree, reflet au sol, halo rouge tres doux ----------
+    shot = Image.open(os.path.join(SHOTS, "peachy_both.png")).convert("RGB")
+    kk = shot.height / 928.0
+    mk = Image.new("L", shot.size, 0); md = ImageDraw.Draw(mk)
+    md.rounded_rectangle((PX0 * kk, PY0 * kk, (PX0 + PW) * kk, (PY0 + PH) * kk), radius=PR * kk, fill=255)
+    for jx in (JACK_OUT_X, JACK_IN_X):
+        md.rectangle(((jx - 58) * kk, max(0.0, JACK_Y - 16) * kk, (jx + 58) * kk, PY0 * kk + 2), fill=255)
+    arr = np.asarray(shot).astype(np.float32).mean(-1)
+    m = np.asarray(mk).astype(np.float32)
+    body = Image.new("L", shot.size, 0); ImageDraw.Draw(body).rounded_rectangle((PX0 * kk, PY0 * kk, (PX0 + PW) * kk, (PY0 + PH) * kk), radius=PR * kk, fill=255)
+    bm = np.asarray(body).astype(np.float32)
+    m = np.where(bm > 0, bm, m * (arr > 60))          # jacks : seulement le metal (pas le fond sombre)
+    from PIL import ImageFilter
+    mk = Image.fromarray(m.astype(np.uint8)).filter(ImageFilter.GaussianBlur(1.2))
+    cut = Image.new("RGBA", shot.size, (0, 0, 0, 0)); cut.paste(shot, (0, 0), mk)
+    cut = cut.crop(cut.getbbox())
+    cw, ch = cut.size
+    pad = int(cw * 0.14)
+    canvas = Image.new("RGBA", (cw + 2 * pad, int(ch * 1.30) + pad), (0, 0, 0, 255))
+    yy, xx = np.mgrid[0:canvas.height, 0:canvas.width].astype(np.float64)
+    gcx, gcy = canvas.width / 2, pad + ch * 0.45
+    glow = np.exp(-(((xx - gcx) / (cw * 0.62)) ** 2 + ((yy - gcy) / (ch * 0.48)) ** 2)) * 40
+    edge = np.clip(np.minimum.reduce([xx, canvas.width - 1 - xx, yy, canvas.height - 1 - yy]) / (pad * 0.9), 0, 1)
+    glow *= edge ** 2
+    halo = np.dstack([glow * 0.95, glow * 0.12, glow * 0.12, np.full_like(glow, 255)]).astype(np.uint8)
+    canvas = Image.alpha_composite(canvas, Image.fromarray(halo, "RGBA"))
+    refl = cut.transpose(Image.FLIP_TOP_BOTTOM)
+    ra = np.array(refl).astype(np.float64)
+    fade = np.clip(1 - np.arange(refl.height) / (refl.height * 0.22), 0, 1) ** 1.6 * 0.22
+    ra[..., 3] *= fade[:, None]
+    canvas.alpha_composite(Image.fromarray(ra.astype(np.uint8), "RGBA"), (pad, pad + ch + 6))
+    canvas.alpha_composite(cut, (pad, pad))
+    canvas = canvas.crop((0, 0, canvas.width, pad + int(ch * 1.20)))
+    cover = os.path.join(TMP, "peachy_cover_cutout.png"); canvas.convert("RGB").save(cover)
+    import shutil
+    os.makedirs(ASSETS, exist_ok=True)
+    for n in NAMES: shutil.copy(os.path.join(TMP, n), os.path.join(ASSETS, n))
+else:
+    annotated, oct_img, led_img, bar_img, cover = [os.path.join(ASSETS, n) for n in NAMES]
 
 def img(path, width):
     im = Image.open(path); h = width * im.height / im.width
@@ -213,20 +223,21 @@ T = {
      "Everything can also be automated in the DAW (all knobs, Octave, Preamp Footswitch, Fuzz Footswitch)."],
  midi_t="6. MIDI",
  midi_txt=["<b>MIDI Learn on every control</b>: right-click a control (any of the 9 knobs, the OCTAVE switch or one of the footswitches). The top of the menu shows <b>MIDI Learn: &lt;Name&gt; (CC n / none)</b> with the current assignment, <b>Clear MIDI: &lt;Name&gt;</b> and, while a learn is waiting, <b>Cancel MIDI learn</b>. Choose MIDI Learn, then move a pedal or knob or press a footswitch of your controller: the status line shows <b>MIDI LEARN: move a control for &lt;Name&gt;</b>, then <b>&lt;Name&gt; = CC n</b> for 2 seconds.",
-           "Every right-click menu (on a control or anywhere else on the pedal) also has the <b>MIDI map</b> submenu: <b>Learn</b> for each of the 12 controls (with its current assignment), <b>Cancel MIDI learn</b> and <b>Reset MIDI to defaults (CC 20-31)</b>, plus a reminder of the map. Choosing the pending item again also cancels the learn.",
+           "Every right-click menu (on a control or anywhere else on the pedal) also has the <b>MIDI map</b> submenu: <b>Learn</b> for each of the 12 controls (with its current assignment), <b>Cancel MIDI learn</b> (while a learn is waiting) and <b>Clear all MIDI assignments</b>, plus a reminder of the map. Choosing the pending item again also cancels the learn.",
+           "<b>No CC is assigned by default</b>: Peachy does not react to any CC until you have learned one. Older projects that still had the former factory map open with no assignment; a project in which you had changed at least one assignment keeps its assignments.",
            "A CC number can only drive one control: learning a CC that is already used removes it from the other control. Learn accepts CC 0 to 119; Peachy listens on all MIDI channels. <b>Assignments are saved with the project</b> (and with DAW presets)."],
- midi_hdr=["Control", "Default CC", "Type"],
- midi=[["Master", "CC 20", "Continuous"], ["Gain", "CC 21", "Continuous"], ["Volume (fuzz)", "CC 22", "Continuous"], ["Distortion", "CC 23", "Continuous"],
-       ["Bass", "CC 24", "Continuous"], ["Mid", "CC 25", "Continuous"], ["Treble", "CC 26", "Continuous"], ["Tone (fuzz)", "CC 27", "Continuous"], ["Presence", "CC 28", "Continuous"],
-       ["Octave", "CC 29", "Switch: 64 and above = on, below 64 = off"],
-       ["Preamp footswitch", "CC 30", "Footswitch: latching (127 = on / 0 = off) or momentary (toggle on each press)"],
-       ["Fuzz footswitch", "CC 31", "Footswitch: latching (127 = on / 0 = off) or momentary (toggle on each press)"]],
- midi2=["<b>Knobs</b>: 0-127 covers the whole travel; a knob on CC 0-31 also accepts the 14-bit fine part on CC n+32 (CC 52 to 60 with the default map). Expression pedals are smooth: ramps between messages and automatic learning of your pedal's real travel (0 and 100 % are always reached).",
+ midi_hdr=["Control", "Type"],
+ midi=[["Master", "Continuous"], ["Gain", "Continuous"], ["Volume (fuzz)", "Continuous"], ["Distortion", "Continuous"],
+       ["Bass", "Continuous"], ["Mid", "Continuous"], ["Treble", "Continuous"], ["Tone (fuzz)", "Continuous"], ["Presence", "Continuous"],
+       ["Octave", "Switch: 64 and above = on, below 64 = off"],
+       ["Preamp footswitch", "Footswitch: latching (127 = on / 0 = off) or momentary (toggle on each press)"],
+       ["Fuzz footswitch", "Footswitch: latching (127 = on / 0 = off) or momentary (toggle on each press)"]],
+ midi2=["<b>Knobs</b>: 0-127 covers the whole travel; a knob on CC 0-31 also accepts the 14-bit fine part on CC n+32 (n = the learned CC). Expression pedals are smooth: ramps between messages and automatic learning of your pedal's real travel (0 and 100 % are always reached).",
         "<b>MIDI footswitches</b>: right-click &gt; <b>Settings</b> &gt; <b>MIDI footswitches latching (127 = on / 0 = off)</b> (default) or <b>MIDI footswitches momentary (toggle each press)</b>.",
         "<b>Program Change</b> 1-10 loads the factory presets."],
  led_cap="Preamp section off, then on (LED lit).",
  win_t="7. Window",
- win=["Peachy uses the double pedal format of Ring Think. Right-click &gt; <b>Window size</b>: <b>60 % (default)</b>, <b>75 %</b>, <b>100 %</b>. The window opens at its default size and can never be made smaller; you can also drag the bottom-right corner to enlarge it (proportions kept).",
+ win=["Peachy uses the double pedal format of Ring Think. Right-click &gt; <b>Plugin size</b>: <b>60 %</b>, <b>75 %</b>, <b>100 %</b> resizes this window; <b>(default)</b> marks the default size you have chosen. At the bottom of this submenu, <b>Default size (new windows)</b> chooses the size at which every new window of Peachy opens (one setting shared by all instances, saved on the computer); the open window also takes this size at once. The size is not saved with the project: each time it is opened, the window comes back at the default size. It can never be made smaller than 60 %; you can also drag the bottom-right corner to enlarge it (proportions kept).",
       "The <b>status line</b> shows the MIDI Learn messages, otherwise only the setting of the control you just moved (knobs in %, e.g. <i>distortion 82 %</i>, <i>fuzz on</i>) in the handwriting of the pedal and fades out after 2.5 s. The <b>preset bar</b> under it always shows the current preset."],
  bar_cap="Status line and preset bar.",
  pre_t="8. Presets",
@@ -243,8 +254,8 @@ T = {
        ["Latency", "32 samples at 48 kHz (preamp oversampling), more at other rates (resampling to the 48 kHz of the captures); reported to the DAW"],
        ["Fuzz", "5 NAM WaveNet captures (distortion 50 / 65 / 75 / 90 / 100 %), exact TONE filter"], ["Octave", "Semitones engine (pitch-synchronous splicing, YIN tracking down to 31 Hz), -12 semitones, 50 / 50 equal-power blend"],
        ["Preamp", "6 to 56 dB gain, 4x oversampling, passive 3-band tone stack, presence ±10 dB"],
-       ["MIDI", "MIDI Learn on all 12 controls (saved with the project), defaults CC 20-31 (14-bit on CC 52-60), Program Change 1-10, all channels"],
-       ["Window", "60 % (default, also the minimum size), 75 %, 100 %; anti-freeze v2 on Windows (software rendering, display caches rebuilt by a timer, redraw watchdog, no call to the host from the audio thread)"],
+       ["MIDI", "MIDI Learn on all 12 controls (saved with the project), no CC assigned by default, 14-bit on CC n+32, Program Change 1-10, all channels"],
+       ["Window", "Plugin size 60 % (minimum), 75 %, 100 %, default size of new windows to choose (60 % at first); anti-freeze v2 on Windows (software rendering, display caches rebuilt by a timer, redraw watchdog, no call to the host from the audio thread)"],
        ["Version", VERSION], ["CPU", "about 3 % (preamp), 10 to 20 % (fuzz) of one core at 48 kHz"]]),
 "fr": dict(
  lang="FRANÇAIS", sub="Préampli + fuzz &nbsp;·&nbsp; VST3 pour Windows et macOS", ver="Notice d'utilisation &nbsp;·&nbsp; version " + VERSION,
@@ -290,20 +301,21 @@ T = {
      "Tout est aussi automatisable dans le DAW (tous les potards, Octave, Preamp Footswitch, Fuzz Footswitch)."],
  midi_t="6. MIDI",
  midi_txt=["<b>MIDI Learn sur toutes les commandes</b> : faites un clic droit sur une commande (l'un des 9 potards, l'inverseur OCTAVE ou l'un des footswitchs). Le haut du menu affiche <b>MIDI Learn: &lt;Nom&gt; (CC n / none)</b> avec l'assignation actuelle, <b>Clear MIDI: &lt;Nom&gt;</b> et, tant qu'un apprentissage est en attente, <b>Cancel MIDI learn</b>. Choisissez MIDI Learn puis bougez une pédale, un bouton ou appuyez sur un footswitch de votre contrôleur : la ligne d'état affiche <b>MIDI LEARN: move a control for &lt;Nom&gt;</b>, puis <b>&lt;Nom&gt; = CC n</b> pendant 2 secondes.",
-           "Chaque menu clic droit (sur une commande ou ailleurs sur la pédale) contient aussi le sous-menu <b>MIDI map</b> : <b>Learn</b> pour chacune des 12 commandes (avec son assignation actuelle), <b>Cancel MIDI learn</b> et <b>Reset MIDI to defaults (CC 20-31)</b>, plus un rappel de la table. Choisir de nouveau la commande en attente annule aussi l'apprentissage.",
+           "Chaque menu clic droit (sur une commande ou ailleurs sur la pédale) contient aussi le sous-menu <b>MIDI map</b> : <b>Learn</b> pour chacune des 12 commandes (avec son assignation actuelle), <b>Cancel MIDI learn</b> (tant qu'un apprentissage est en attente) et <b>Clear all MIDI assignments</b>, plus un rappel de la table. Choisir de nouveau la commande en attente annule aussi l'apprentissage.",
+           "<b>Aucun CC n'est assigné par défaut</b> : Peachy ne réagit à aucun CC tant que vous n'en avez pas appris un. Les anciens projets restés sur l'ancienne table d'usine s'ouvrent sans assignation ; un projet où vous aviez changé au moins une assignation garde ses assignations.",
            "Un numéro de CC ne pilote qu'une seule commande : apprendre un CC déjà utilisé le retire de l'autre commande. L'apprentissage accepte les CC 0 à 119 ; Peachy écoute tous les canaux MIDI. <b>Les assignations sont sauvegardées avec le projet</b> (et avec les presets du DAW)."],
- midi_hdr=["Commande", "CC par défaut", "Type"],
- midi=[["Master", "CC 20", "Continu"], ["Gain", "CC 21", "Continu"], ["Volume (fuzz)", "CC 22", "Continu"], ["Distortion", "CC 23", "Continu"],
-       ["Bass", "CC 24", "Continu"], ["Mid", "CC 25", "Continu"], ["Treble", "CC 26", "Continu"], ["Tone (fuzz)", "CC 27", "Continu"], ["Presence", "CC 28", "Continu"],
-       ["Octave", "CC 29", "Bascule : 64 et plus = on, moins de 64 = off"],
-       ["Preamp footswitch", "CC 30", "Footswitch : à accrochage (127 = on / 0 = off) ou momentané (bascule à chaque appui)"],
-       ["Fuzz footswitch", "CC 31", "Footswitch : à accrochage (127 = on / 0 = off) ou momentané (bascule à chaque appui)"]],
- midi2=["<b>Potards</b> : 0-127 couvre toute la course ; un potard sur un CC de 0 à 31 accepte aussi la partie fine 14 bits sur le CC n+32 (CC 52 à 60 avec la table par défaut). Les pédales d'expression sont fluides : rampes entre les messages et apprentissage automatique de la course réelle de la pédale (0 et 100 % toujours atteints).",
+ midi_hdr=["Commande", "Type"],
+ midi=[["Master", "Continu"], ["Gain", "Continu"], ["Volume (fuzz)", "Continu"], ["Distortion", "Continu"],
+       ["Bass", "Continu"], ["Mid", "Continu"], ["Treble", "Continu"], ["Tone (fuzz)", "Continu"], ["Presence", "Continu"],
+       ["Octave", "Bascule : 64 et plus = on, moins de 64 = off"],
+       ["Preamp footswitch", "Footswitch : à accrochage (127 = on / 0 = off) ou momentané (bascule à chaque appui)"],
+       ["Fuzz footswitch", "Footswitch : à accrochage (127 = on / 0 = off) ou momentané (bascule à chaque appui)"]],
+ midi2=["<b>Potards</b> : 0-127 couvre toute la course ; un potard sur un CC de 0 à 31 accepte aussi la partie fine 14 bits sur le CC n+32 (n = le CC appris). Les pédales d'expression sont fluides : rampes entre les messages et apprentissage automatique de la course réelle de la pédale (0 et 100 % toujours atteints).",
         "<b>Footswitchs MIDI</b> : clic droit &gt; <b>Settings</b> &gt; <b>MIDI footswitches latching (127 = on / 0 = off)</b> (par défaut) ou <b>MIDI footswitches momentary (toggle each press)</b>.",
         "<b>Program Change</b> 1 à 10 : presets usine."],
  led_cap="Section préampli coupée, puis enclenchée (LED allumée).",
  win_t="7. Fenêtre",
- win=["Peachy utilise le format pédale double de Ring Think. Clic droit &gt; <b>Window size</b> : <b>60 % (default)</b>, <b>75 %</b>, <b>100 %</b>. La fenêtre s'ouvre à sa taille par défaut et ne peut jamais être réduite en dessous ; on peut aussi tirer le coin en bas à droite pour l'agrandir (proportions conservées).",
+ win=["Peachy utilise le format pédale double de Ring Think. Clic droit &gt; <b>Plugin size</b> : <b>60 %</b>, <b>75 %</b>, <b>100 %</b> redimensionne cette fenêtre ; <b>(default)</b> signale la taille par défaut choisie. En bas de ce sous-menu, <b>Default size (new windows)</b> choisit la taille d'ouverture de toutes les nouvelles fenêtres de Peachy (réglage commun à toutes les instances, enregistré sur l'ordinateur) ; la fenêtre ouverte prend aussi tout de suite cette taille. La taille n'est pas sauvegardée avec le projet : à chaque ouverture, la fenêtre revient à la taille par défaut. Elle ne peut jamais être réduite sous 60 % ; on peut aussi tirer le coin en bas à droite pour l'agrandir (proportions conservées).",
       "La <b>ligne d'état</b> affiche les messages du MIDI Learn, sinon seulement le réglage de la commande que vous venez de bouger (potards en %, par ex. <i>distortion 82 %</i>, <i>fuzz on</i>) dans l'écriture manuscrite de la pédale, et s'efface au bout de 2,5 s. La <b>barre de presets</b> en dessous affiche en permanence le preset en cours."],
  bar_cap="Ligne d'état et barre de presets.",
  pre_t="8. Presets",
@@ -320,8 +332,8 @@ T = {
        ["Latence", "32 échantillons à 48 kHz (sur-échantillonnage du préampli), davantage aux autres fréquences (rééchantillonnage vers les 48 kHz des captures) ; annoncée au DAW"],
        ["Fuzz", "5 captures NAM WaveNet (distortion 50 / 65 / 75 / 90 / 100 %), filtre TONE exact"], ["Octave", "Moteur de Semitones (raccords synchronisés sur la période, suivi YIN jusqu'à 31 Hz), -12 demi-tons, mélange 50 / 50 à puissance égale"],
        ["Préampli", "gain 6 à 56 dB, sur-échantillonnage x4, tone stack passif 3 bandes, présence ±10 dB"],
-       ["MIDI", "MIDI Learn sur les 12 commandes (sauvegardé avec le projet), CC 20 à 31 par défaut (14 bits sur CC 52 à 60), Program Change 1 à 10, tous canaux"],
-       ["Fenêtre", "60 % (par défaut, c'est aussi la taille minimale), 75 %, 100 % ; anti-gel v2 sous Windows (rendu logiciel, caches d'affichage refaits par un timer, chien de garde de redessin, aucun appel à l'hôte depuis le thread audio)"],
+       ["MIDI", "MIDI Learn sur les 12 commandes (sauvegardé avec le projet), aucun CC assigné par défaut, 14 bits sur CC n+32, Program Change 1 à 10, tous canaux"],
+       ["Fenêtre", "Plugin size 60 % (minimum), 75 %, 100 %, taille par défaut des nouvelles fenêtres au choix (60 % au départ) ; anti-gel v2 sous Windows (rendu logiciel, caches d'affichage refaits par un timer, chien de garde de redessin, aucun appel à l'hôte depuis le thread audio)"],
        ["Version", VERSION], ["Processeur", "environ 3 % (préampli), 10 à 20 % (fuzz) d'un cœur à 48 kHz"]]),
 }
 
@@ -350,7 +362,7 @@ def section(lang):
     f.append(P(t["fs_t"], "h1")); f += bullets(t["fs"])
     f.append(KeepTogether([Spacer(1, 2 * mm), img(led_img, W * 0.46), P(t["led_cap"], "small")]))
     f.append(P(t["midi_t"], "h1")); f += [P(x) for x in t["midi_txt"]]
-    f.append(Spacer(1, 2 * mm)); f.append(KeepTogether([table([t["midi_hdr"]] + t["midi"], [38 * mm, 24 * mm, W - 62 * mm])])); f.append(Spacer(1, 3 * mm))
+    f.append(Spacer(1, 2 * mm)); f.append(KeepTogether([table([t["midi_hdr"]] + t["midi"], [38 * mm, W - 38 * mm])])); f.append(Spacer(1, 3 * mm))
     f += bullets(t["midi2"])
     f.append(P(t["win_t"], "h1")); f.append(P(t["win"][0]))
     wt = Table([[[P(t["win"][1])], [img(bar_img, 70 * mm), P(t["bar_cap"], "small")]]], colWidths=[W - 74 * mm, 74 * mm])
