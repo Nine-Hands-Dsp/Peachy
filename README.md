@@ -66,21 +66,17 @@ Interprétation des potards du haut (non documentée par le fabricant) : MASTER 
 
 ## MIDI
 
-| Message | Fonction |
-|---|---|
-| CC 20 à 28 | Master, Gain, Volume, Distortion, Bass, Mid, Treble, Tone, Presence |
-| CC 52 à 60 | Poids faible 14 bits des CC 20 à 28 |
-| CC 29 | Octave (≥ 64 on) |
-| CC 30 / 31 | Footswitch PREAMP / FUZZ |
-| Program Change 1 à 10 | Presets d'usine |
+Aucun CC assigné par défaut : clic droit > MIDI > Learn (Master, Gain, Volume, Distortion, Bass, Mid, Treble, Tone,
+Presence, Octave ≥ 64 on, footswitchs PREAMP / FUZZ). Un potard appris sur un CC n de 0 à 31 accepte aussi le poids
+faible 14 bits sur le CC n+32. Program Change 1 à 10 : presets d'usine.
 
 Footswitchs MIDI à accrochage (127 / 0, par défaut) ou momentanés (bascule à chaque appui). Pédale d'expression sans
 saccades (rampe entre deux CC, course apprise automatiquement, zones mortes aux butées). Tout est automatisable.
 
 **MIDI Learn (v1.5)** : clic droit sur un potard, l'inverseur OCTAVE ou un footswitch > « MIDI Learn: <commande> », puis
 bouger la pédale / appuyer sur le footswitch MIDI ; la ligne d'état affiche « MIDI LEARN: move a control for … » puis
-« <commande> = CC n ». « Clear MIDI » retire l'assignation ; clic droit > MIDI map > « Reset MIDI to defaults » revient à
-la table ci-dessus. Les assignations sont sauvegardées avec le projet.
+« <commande> = CC n ». « Clear MIDI » retire l'assignation ; clic droit > MIDI map > « Clear all MIDI assignments » efface
+toutes les assignations. Les assignations sont sauvegardées avec le projet.
 
 ## Presets d'usine
 
@@ -98,3 +94,4 @@ la table ci-dessus. Les assignations sont sauvegardées avec le projet.
 - v1.4.1 : menu de taille de fenêtre : « 60 % (default) », 75 %, 100 % (plus de taille en pixels)
 - v1.5.0 : MIDI Learn au clic droit sur chaque commande (Clear MIDI, assignations sauvegardées avec le projet)
 - v1.6.0 : clic droit > Plugin size > Default size (new windows) : taille par défaut des nouvelles fenêtres au choix, comme dans Octopus
+- v1.6.1 : plus aucun CC MIDI assigné par défaut (tout passe par le MIDI Learn)

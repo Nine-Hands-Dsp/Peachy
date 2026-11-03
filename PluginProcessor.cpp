@@ -42,18 +42,18 @@ const PeachyAudioProcessor::LearnDef& PeachyAudioProcessor::learnDef (int i)
 {
     static const LearnDef defs[numLearn] =
     {
-        { "master",     "Master",           ccFirstKnob + 0, learnContinuous, 0 },
-        { "gain",       "Gain",             ccFirstKnob + 1, learnContinuous, 0 },
-        { "volume",     "Volume (fuzz)",    ccFirstKnob + 2, learnContinuous, 0 },
-        { "distortion", "Distortion",       ccFirstKnob + 3, learnContinuous, 0 },
-        { "bass",       "Bass",             ccFirstKnob + 4, learnContinuous, 0 },
-        { "mid",        "Mid",              ccFirstKnob + 5, learnContinuous, 0 },
-        { "treble",     "Treble",           ccFirstKnob + 6, learnContinuous, 0 },
-        { "tone",       "Tone (fuzz)",      ccFirstKnob + 7, learnContinuous, 0 },
-        { "presence",   "Presence",         ccFirstKnob + 8, learnContinuous, 0 },
-        { "octave",     "Octave",           ccOctave,        learnToggle,     2 },   // >= 64 : octave
-        { "preampOn",   "Preamp footswitch", ccPreampFs,     learnFootswitch, 0 },
-        { "fuzzOn",     "Fuzz footswitch",  ccFuzzFs,        learnFootswitch, 0 },
+        { "master",     "Master",           -1, learnContinuous, 0, ccFirstKnob + 0 },
+        { "gain",       "Gain",             -1, learnContinuous, 0, ccFirstKnob + 1 },
+        { "volume",     "Volume (fuzz)",    -1, learnContinuous, 0, ccFirstKnob + 2 },
+        { "distortion", "Distortion",       -1, learnContinuous, 0, ccFirstKnob + 3 },
+        { "bass",       "Bass",             -1, learnContinuous, 0, ccFirstKnob + 4 },
+        { "mid",        "Mid",              -1, learnContinuous, 0, ccFirstKnob + 5 },
+        { "treble",     "Treble",           -1, learnContinuous, 0, ccFirstKnob + 6 },
+        { "tone",       "Tone (fuzz)",      -1, learnContinuous, 0, ccFirstKnob + 7 },
+        { "presence",   "Presence",         -1, learnContinuous, 0, ccFirstKnob + 8 },
+        { "octave",     "Octave",           -1, learnToggle,     2, ccOctave },   // >= 64 : octave
+        { "preampOn",   "Preamp footswitch", -1, learnFootswitch, 0, ccPreampFs },
+        { "fuzzOn",     "Fuzz footswitch",  -1, learnFootswitch, 0, ccFuzzFs },
     };
     return defs[jlimit (0, numLearn - 1, i)];
 }
@@ -396,9 +396,15 @@ void PeachyAudioProcessor::setStateInformation (const void* data, int size)
         {
             auto state = ValueTree::fromXml (*xml);
             currentPreset = (int) state.getProperty ("currentPreset", 0);
-            // assignations MIDI Learn (ancien projet sans ces proprietes : numeros par defaut 20 a 31)
+            // assignations MIDI Learn ; ancien projet (sans ces proprietes, ou avec la table d'usine CC 20-31
+            // jamais modifiee) : considere comme jamais assigne, tout est vide
+            bool untouchedFactory = true;
             for (int i = 0; i < numLearn; ++i)
-                ccMap[i].store (jlimit (-1, 127, (int) state.getProperty (String ("cc_") + learnDef (i).id, learnDef (i).defaultCC)));
+            {
+                ccMap[i].store (jlimit (-1, 127, (int) state.getProperty (String ("cc_") + learnDef (i).id, learnDef (i).legacyCC)));
+                if (ccMap[i].load() != learnDef (i).legacyCC) untouchedFactory = false;
+            }
+            if (untouchedFactory) resetMidiMap();
             apvts.replaceState (state);
             ++presetCounter;
         }

@@ -665,7 +665,7 @@ void PeachyAudioProcessorEditor::showContextMenu (int learnIdx)
     }
     midi.addSeparator();
     if (proc.learnTarget.load() >= 0) midi.addItem (1200, "Cancel MIDI learn");
-    midi.addItem (1201, "Reset MIDI to defaults (CC 20-31)");
+    midi.addItem (1201, "Clear all MIDI assignments");
     midi.addSeparator();
     midi.addItem (910, "Octave: 64+ on", false);
     midi.addItem (913, "CC n+32 = fine (14-bit) for knobs on CC 0-31", false);
