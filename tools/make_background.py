@@ -1,5 +1,5 @@
 """
-PEACHY (Studio Wiga) - fond du plugin a partir du visuel fourni par l'utilisateur (design/source/peachy_visuel_v2.png).
+PEACHY (NINE HANDS | DSP) - fond du plugin a partir du visuel fourni par l'utilisateur (design/source/peachy_visuel_v2.png).
 
 Le visuel (1168 x 874, meme geometrie que le repere 1240 x 928 du plugin) est la reference : sa lumiere
 (en haut a gauche) et sa texture de peinture sont conservees. Ce script :
@@ -10,7 +10,7 @@ Le visuel (1168 x 874, meme geometrie que le repere 1240 x 928 du plugin) est la
   3. pose les nouvelles pieces rendues en 3D avec la meme lumiere : footswitchs NOIRS (ecrou hexagonal anodise,
      bague moletee, bouton tourne), LED a bague chromee (eteintes dans le fond, allumees en sprite), jacks EN HAUT
      du boitier comme sur l'original (OUT a gauche, IN a droite, plus petits) avec inscriptions out / in ;
-  4. calcule l'eclairage de la facade par chaque LED, l'inverseur OCTAVE (kit Studio Wiga) et ecrit Layout.h.
+  4. calcule l'eclairage de la facade par chaque LED, l'inverseur OCTAVE (kit NINE HANDS | DSP) et ecrit Layout.h.
 Usage : python3 tools/make_background.py
 """
 import os, sys, math

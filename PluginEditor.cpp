@@ -303,7 +303,7 @@ void PeachyAudioProcessorEditor::resized()
 }
 
 //==============================================================================
-// Anti-gel v2 (Studio Wiga) : rendu logiciel force sous Windows, aucun calcul lourd dans paint(),
+// Anti-gel v2 (NINE HANDS | DSP) : rendu logiciel force sous Windows, aucun calcul lourd dans paint(),
 // caches reconstruits par le timer, chien de garde de redessin ; cote audio, aucun appel a l'hote.
 //==============================================================================
 void PeachyAudioProcessorEditor::useSoftwareRenderer()
@@ -672,7 +672,7 @@ void PeachyAudioProcessorEditor::showContextMenu (int learnIdx)
     midi.addItem (914, "Program Change 1-10  Factory presets", false);
     menu.addSubMenu ("MIDI map", midi);
     menu.addSeparator();
-    menu.addItem (999, "Peachy preamp + fuzz v" + String (JucePlugin_VersionString) + " - STUDIO WIGA", false);
+    menu.addItem (999, "Peachy preamp + fuzz v" + String (JucePlugin_VersionString) + " - NINE HANDS | DSP", false);
 
     menu.showMenuAsync (PopupMenu::Options().withTargetComponent (this),
         [safe = Component::SafePointer<PeachyAudioProcessorEditor> (this)] (int r)

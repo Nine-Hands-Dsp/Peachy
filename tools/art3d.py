@@ -1,4 +1,4 @@
-"""Outils de rendu 3D (champ de hauteurs + lumiere en haut a gauche) des commandes Studio Wiga - repris de make_art.py."""
+"""Outils de rendu 3D (champ de hauteurs + lumiere en haut a gauche) des commandes NINE HANDS | DSP - repris de make_art.py."""
 import math
 import numpy as np, cv2
 AS = 2

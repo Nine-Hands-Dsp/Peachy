@@ -45,7 +45,7 @@ juce_add_binary_data(PeachyAssets SOURCES
 set_target_properties(PeachyAssets PROPERTIES POSITION_INDEPENDENT_CODE TRUE)
 
 juce_add_plugin(Peachy
-  COMPANY_NAME "Studio Wiga"
+  COMPANY_NAME "NINE HANDS | DSP"
   PLUGIN_MANUFACTURER_CODE Wiga
   PLUGIN_CODE WgPc
   BUNDLE_ID com.studiowiga.peachy

@@ -1,4 +1,5 @@
 #include "PluginProcessor.h"
+#include "NineHandsFolder.h"
 #include "PluginEditor.h"
 #include "BinaryData.h"
 
@@ -329,7 +330,7 @@ void PeachyAudioProcessor::applyFactoryPreset (int index)
 File PeachyAudioProcessor::getUserPresetFile()
 {
     return File::getSpecialLocation (File::userApplicationDataDirectory)
-             .getChildFile ("Studio Wiga").getChildFile ("Peachy").getChildFile ("UserPresets.xml");
+             .getChildFile (nhd::folderName()).getChildFile ("Peachy").getChildFile ("UserPresets.xml");
 }
 
 static const char* presetIds[] = { "master", "gain", "volume", "distortion", "bass", "mid", "treble", "tone", "presence", "octave", "preampOn", "fuzzOn" };

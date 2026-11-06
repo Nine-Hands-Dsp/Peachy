@@ -7,7 +7,7 @@
 #include "PeachyDSP.h"
 
 //==============================================================================
-// PEACHY (Studio Wiga) - preampli + fuzz au format pedale double. Voir README.md et PeachyDSP.h.
+// PEACHY (NINE HANDS | DSP) - preampli + fuzz au format pedale double. Voir README.md et PeachyDSP.h.
 //==============================================================================
 
 struct PeachyPreset

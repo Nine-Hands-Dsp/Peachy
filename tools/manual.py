@@ -1,4 +1,4 @@
-# PEACHY (Studio Wiga) - notice PDF bilingue (anglais puis francais), illustree avec le rendu reel du plugin.
+# PEACHY (NINE HANDS | DSP) - notice PDF bilingue (anglais puis francais), illustree avec le rendu reel du plugin.
 # Usage : python3 tools/manual.py [<dossier des captures (tools/render)>] <fichier PDF de sortie>
 #   avec captures : recompose les images et les copie dans tools/manual_assets/ ;
 #   sans captures : reprend les images composees de tools/manual_assets/ (extraites de la notice precedente).
@@ -182,9 +182,9 @@ T = {
 "en": dict(
  lang="ENGLISH", sub="Preamp + fuzz &nbsp;·&nbsp; VST3 for Windows and macOS", ver="User manual &nbsp;·&nbsp; version " + VERSION,
  intro_t="1. Introduction",
- intro=["<b>PEACHY</b> is a Studio Wiga plugin modelled on the KoRn <b>Indigo Ranch</b> signature pedal, a double pedal that combines a "
+ intro=["<b>PEACHY</b> is a NINE HANDS | DSP plugin modelled on the KoRn <b>Indigo Ranch</b> signature pedal, a double pedal that combines a "
         "high-gain <b>preamp</b> and a separate <b>fuzz</b> with a low <b>octave</b>, voiced after the guitar sounds of the band's mid-90s "
-        "records (tight, saturated crunch for 7-string riffs; woolly, sustain-heavy fuzz). Studio Wiga is not affiliated with the band or the maker of the pedal.",
+        "records (tight, saturated crunch for 7-string riffs; woolly, sustain-heavy fuzz). NINE HANDS | DSP is not affiliated with the band or the maker of the pedal.",
         "The <b>fuzz is the real pedal</b>: it is played by 45 NAM captures of the fuzz section (distortion 50 to 100 %, tone 1 to 9). "
         "Analysis showed that the TONE knob acts as a linear filter after the clipping, so Peachy runs the five TONE 5 captures as neural "
         "networks (NeuralAmpModelerCore), fades between the two nearest ones when you turn DISTORTION, and applies an exact model of the TONE "
@@ -193,9 +193,9 @@ T = {
         "low end tightened before the clipping, passive 3-band tone stack computed exactly, presence at the output), with 4x oversampling.",
         "Signal path: input &gt; OCTAVE &gt; FUZZ &gt; PREAMP &gt; output; the fuzz drives the preamp, as on the pedal."],
  inst_t="2. Installation",
- inst=[("Windows", "Download the <b>Peachy-VST3-Windows</b> artifact from the Actions tab of the GitHub repository studiowiga/lifeispeachy, unzip it and copy the <b>Peachy.vst3</b> folder into <b>C:\\Program Files\\Common Files\\VST3</b>."),
+ inst=[("Windows", "Download the <b>Peachy-VST3-Windows</b> artifact from the Actions tab of the GitHub repository Nine-Hands-Dsp/lifeispeachy, unzip it and copy the <b>Peachy.vst3</b> folder into <b>C:\\Program Files\\Common Files\\VST3</b>."),
        ("macOS", "Download <b>Peachy-VST3-macOS</b>, unzip it and copy <b>Peachy.vst3</b> into <b>~/Library/Audio/Plug-Ins/VST3</b>. If macOS blocks it, run <b>xattr -cr ~/Library/Audio/Plug-Ins/VST3/Peachy.vst3</b> in the Terminal. The binary is universal (Apple Silicon and Intel)."),
-       ("Reaper", "Options &gt; Preferences &gt; Plug-ins &gt; VST &gt; <b>Re-scan</b>. The plugin appears as <b>Peachy (Studio Wiga)</b>. To control it from MIDI footswitches and expression pedals, the track must receive MIDI from your controller (e.g. the M-Vave Chocolate Plus).")],
+       ("Reaper", "Options &gt; Preferences &gt; Plug-ins &gt; VST &gt; <b>Re-scan</b>. The plugin appears as <b>Peachy (NINE HANDS | DSP)</b>. To control it from MIDI footswitches and expression pedals, the track must receive MIDI from your controller (e.g. the M-Vave Chocolate Plus).")],
  ov_t="3. Interface overview",
  ov_rows=[["#", "Control", "Role"],
    ["1", "MASTER", "Preamp output level."], ["2", "GAIN", "Preamp gain."], ["3", "VOLUME", "Fuzz output level."],
@@ -260,9 +260,9 @@ T = {
 "fr": dict(
  lang="FRANÇAIS", sub="Préampli + fuzz &nbsp;·&nbsp; VST3 pour Windows et macOS", ver="Notice d'utilisation &nbsp;·&nbsp; version " + VERSION,
  intro_t="1. Présentation",
- intro=["<b>PEACHY</b> est un plugin Studio Wiga inspiré de la pédale signature KoRn <b>Indigo Ranch</b>, une pédale double qui réunit un "
+ intro=["<b>PEACHY</b> est un plugin NINE HANDS | DSP inspiré de la pédale signature KoRn <b>Indigo Ranch</b>, une pédale double qui réunit un "
         "<b>préampli</b> high gain et un <b>fuzz</b> séparé avec une <b>octave</b> grave, au son des guitares des disques du groupe du milieu des années 90 "
-        "(crunch serré et saturé pour les riffs en 7 cordes ; fuzz laineux à gros sustain). Studio Wiga n'a aucun lien avec le groupe ni avec le fabricant de la pédale.",
+        "(crunch serré et saturé pour les riffs en 7 cordes ; fuzz laineux à gros sustain). NINE HANDS | DSP n'a aucun lien avec le groupe ni avec le fabricant de la pédale.",
         "Le <b>fuzz, c'est la vraie pédale</b> : il est joué par 45 captures NAM de la section fuzz (distortion 50 à 100 %, tone 1 à 9). "
         "L'analyse a montré que le TONE agit comme un filtre linéaire après l'écrêtage : Peachy fait tourner les cinq captures TONE 5 en réseaux "
         "de neurones (NeuralAmpModelerCore), passe en fondu entre les deux plus proches quand on tourne DISTORTION, et applique un modèle exact du "
@@ -271,9 +271,9 @@ T = {
         "grave serré avant l'écrêtage, tone stack passif 3 bandes calculé exactement, présence en sortie), avec un sur-échantillonnage x4.",
         "Trajet du signal : entrée &gt; OCTAVE &gt; FUZZ &gt; PREAMP &gt; sortie ; le fuzz attaque le préampli, comme sur la pédale."],
  inst_t="2. Installation",
- inst=[("Windows", "Téléchargez l'artefact <b>Peachy-VST3-Windows</b> dans l'onglet Actions du dépôt GitHub studiowiga/lifeispeachy, décompressez-le et copiez le dossier <b>Peachy.vst3</b> dans <b>C:\\Program Files\\Common Files\\VST3</b>."),
+ inst=[("Windows", "Téléchargez l'artefact <b>Peachy-VST3-Windows</b> dans l'onglet Actions du dépôt GitHub Nine-Hands-Dsp/lifeispeachy, décompressez-le et copiez le dossier <b>Peachy.vst3</b> dans <b>C:\\Program Files\\Common Files\\VST3</b>."),
        ("macOS", "Téléchargez <b>Peachy-VST3-macOS</b>, décompressez-le et copiez <b>Peachy.vst3</b> dans <b>~/Bibliothèque/Audio/Plug-Ins/VST3</b>. Si macOS le bloque, tapez <b>xattr -cr ~/Library/Audio/Plug-Ins/VST3/Peachy.vst3</b> dans le Terminal. Le binaire est universel (Apple Silicon et Intel)."),
-       ("Reaper", "Options &gt; Préférences &gt; Plug-ins &gt; VST &gt; <b>Re-scan</b>. Le plugin apparaît sous le nom <b>Peachy (Studio Wiga)</b>. Pour le piloter avec des footswitchs et pédales d'expression MIDI, la piste doit recevoir le MIDI de votre contrôleur (par exemple la M-Vave Chocolate Plus).")],
+       ("Reaper", "Options &gt; Préférences &gt; Plug-ins &gt; VST &gt; <b>Re-scan</b>. Le plugin apparaît sous le nom <b>Peachy (NINE HANDS | DSP)</b>. Pour le piloter avec des footswitchs et pédales d'expression MIDI, la piste doit recevoir le MIDI de votre contrôleur (par exemple la M-Vave Chocolate Plus).")],
  ov_t="3. Vue d'ensemble de l'interface",
  ov_rows=[["#", "Commande", "Rôle"],
    ["1", "MASTER", "Volume de sortie du préampli."], ["2", "GAIN", "Gain du préampli."], ["3", "VOLUME", "Volume de sortie du fuzz."],
@@ -386,14 +386,14 @@ def deco(c, doc):
     c.setFillColor(DARK); c.rect(0, A4[1] - 6 * mm, A4[0], 6 * mm, stroke=0, fill=1)
     c.setFillColor(ACC); c.rect(0, A4[1] - 6.8 * mm, A4[0], 0.8 * mm, stroke=0, fill=1)
     c.setFont("Pop", 7.5); c.setFillColor(GREY)
-    c.drawString(18 * mm, 10 * mm, "Peachy (Studio Wiga) · v" + VERSION)
+    c.drawString(18 * mm, 10 * mm, "Peachy (NINE HANDS | DSP) · v" + VERSION)
     c.drawRightString(A4[0] - 18 * mm, 10 * mm, str(doc.page))
     c.restoreState()
 def cover_bg(c, doc):
     c.saveState(); c.setFillColor(colors.black); c.rect(0, 0, A4[0], A4[1], stroke=0, fill=1)
     c.setFillColor(ACC); c.rect(0, A4[1] - 3 * mm, A4[0], 3 * mm, stroke=0, fill=1); c.restoreState()
 doc = BaseDocTemplate(OUT, pagesize=A4, leftMargin=18 * mm, rightMargin=18 * mm, topMargin=16 * mm, bottomMargin=18 * mm,
-                      title="PEACHY - Manual / Notice v" + VERSION, author="Studio Wiga")
+                      title="PEACHY - Manual / Notice v" + VERSION, author="NINE HANDS | DSP")
 doc.addPageTemplates([PageTemplate(id="cover", frames=[Frame(doc.leftMargin, doc.bottomMargin, doc.width, doc.height, id="fc")], onPage=cover_bg),
                       PageTemplate(id="p", frames=[Frame(doc.leftMargin, doc.bottomMargin, doc.width, doc.height, id="f")], onPage=deco)])
 en = section("en"); fr = section("fr")

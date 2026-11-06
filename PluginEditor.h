@@ -21,7 +21,7 @@ public:
 };
 
 //==============================================================================
-// Inverseur OCTAVE (levier nickel du kit Studio Wiga) : 3 images (haut = ON, intermediaire ~55 ms, bas = OFF)
+// Inverseur OCTAVE (levier nickel du kit NINE HANDS | DSP) : 3 images (haut = ON, intermediaire ~55 ms, bas = OFF)
 //==============================================================================
 class LeverSwitch : public juce::Component
 {

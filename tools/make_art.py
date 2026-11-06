@@ -1,8 +1,8 @@
 """
-PEACHY (Studio Wiga) - visuel du plugin, entierement synthetise (design original noir & rouge).
+PEACHY (NINE HANDS | DSP) - visuel du plugin, entierement synthetise (design original noir & rouge).
 
 Disposition des commandes reprise de la pedale d'origine (preampli + fuzz, format double) ; habillage original :
-facade rouge serigraphiee, encre noire (coulures, peche en trame, eclaboussures), nom « Peachy », logo Studio Wiga
+facade rouge serigraphiee, encre noire (coulures, peche en trame, eclaboussures), nom « Peachy », logo NINE HANDS | DSP
 noir en bas. Une seule lumiere pour toute la pedale : en haut a gauche (ombres portees vers le bas a droite).
 
 Repere du plugin : 1240 x 928 unites (comme Ring Think), images en 2x (2480 x 1856).
@@ -197,7 +197,7 @@ redtop = cv2.resize(np.clip(stripes + lr, 0, 1) * band.astype(np.float32) * (~fr
 red_ink = np.array([214.0, 34.0, 36.0])[None, None, :] * (mott * light)[..., None]
 img = img * (1 - redtop[..., None]) + red_ink * redtop[..., None]
 
-# ------------------------------------------------------------------ 5. logo Studio Wiga (noir), tout en bas
+# ------------------------------------------------------------------ 5. logo NINE HANDS | DSP (noir), tout en bas
 logo = np.asarray(Image.open(os.path.join(ROOT, 'assets', 'logo_studio_wiga_blanc.png')).convert('RGBA')).astype(np.float32)
 LOGO_W = 250.0
 lw, lh = int(LOGO_W * AS), int(LOGO_W * AS * logo.shape[0] / logo.shape[1])

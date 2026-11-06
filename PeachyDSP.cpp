@@ -289,7 +289,7 @@ namespace peachy
             gateLine[(size_t) i] = gg;
         }
 
-        // ---- OCTAVE : exactement Semitones (Studio Wiga), preset « Octave doubler (-12) », place devant la pedale :
+        // ---- OCTAVE : exactement Semitones (NINE HANDS | DSP), preset « Octave doubler (-12) », place devant la pedale :
         // transposition -12 demi-tons (meme moteur, SemitonesShifter.h), melange 50 % a puissance egale
         // (direct cos 45 deg + transpose sin 45 deg), puis fuzz / preampli s'ils sont actifs
         if (p.octave || sOct.s2 > 1.0e-4f)

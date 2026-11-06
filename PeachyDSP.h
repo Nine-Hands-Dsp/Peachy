@@ -2,7 +2,7 @@
 #include <string>
 #include "SemitonesShifter.h"
 //==============================================================================
-// PEACHY (Studio Wiga) - moteur audio
+// PEACHY (NINE HANDS | DSP) - moteur audio
 //
 // Reproduction d'une pedale double « preampli + fuzz » au son des sessions metal de 1994-1996
 // (7 cordes accordees bas, preampli serre et sature, fuzz laineux a gros sustain, octave grave).
