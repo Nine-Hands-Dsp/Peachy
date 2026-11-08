@@ -18,7 +18,7 @@ from reportlab.pdfbase.ttfonts import TTFont
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SHOTS = sys.argv[1] if len(sys.argv) > 2 else None
 OUT = sys.argv[-1]
-VERSION = "1.6.1"
+VERSION = "1.6.2"
 TMP = os.path.dirname(os.path.abspath(OUT))
 FONTS = os.path.join(ROOT, "assets", "fonts")
 for n, f in (("Pop", "Poppins-Regular"), ("PopL", "Poppins-Light"), ("PopM", "Poppins-Medium"), ("PopB", "Poppins-Bold")):
@@ -244,7 +244,7 @@ T = {
  pre=["Use the arrows of the preset bar, click its name, right-click anywhere, or the preset menu of your DAW. Right-click &gt; <b>Save user preset</b> stores up to 9 presets of your own. Presets include the footswitch and octave states."],
  fac_hdr=["PC", "Preset", "Preamp: master / gain · bass / mid / treble · presence", "Fuzz: volume / distortion / tone", "On", "Description"],
  tips_t="9. Tips",
- tips=["In Reaper, place Peachy <b>before</b> your amp simulator (for example before Two Notes Genome) with a fairly clean amp, as with the real pedal; the preamp can also go straight into a power amp / cabinet model.",
+ tips=["In Reaper, place Peachy <b>before</b> your amp simulator (for example before Ampire, followed by Impulse for the cab) with a fairly clean amp, as with the real pedal; the preamp can also go straight into a power amp / cabinet model.",
        "For a 7-string tuned to G or lower: keep BASS around noon, raise PRESENCE a little, and add the OCTAVE for extra weight.",
        "Learn DISTORTION or GAIN on an expression pedal to push the saturation with your foot during a riff.",
        "Fuzz into preamp: lower the fuzz VOLUME and the preamp GAIN together; the fuzz already brings a lot of saturation.",
@@ -322,7 +322,7 @@ T = {
  pre=["Utilisez les flèches de la barre de presets, cliquez sur son nom, faites un clic droit n'importe où, ou passez par le menu de presets du DAW. Clic droit &gt; <b>Save user preset</b> enregistre jusqu'à 9 presets personnels. Les presets incluent l'état des footswitchs et de l'octave."],
  fac_hdr=["PC", "Preset", "Préampli : master / gain · bass / mid / treble · presence", "Fuzz : volume / distortion / tone", "Actif", "Description"],
  tips_t="9. Conseils d'utilisation",
- tips=["Dans Reaper, placez Peachy <b>avant</b> votre simulateur d'ampli (par exemple avant Two Notes Genome) avec un ampli assez clair, comme avec la vraie pédale ; le préampli peut aussi aller directement dans un modèle d'ampli de puissance / baffle.",
+ tips=["Dans Reaper, placez Peachy <b>avant</b> votre simulateur d'ampli (par exemple avant Ampire, suivi d'Impulse pour le baffle) avec un ampli assez clair, comme avec la vraie pédale ; le préampli peut aussi aller directement dans un modèle d'ampli de puissance / baffle.",
        "Pour une 7 cordes accordée en Sol ou plus bas : gardez BASS vers midi, montez un peu PRESENCE, et ajoutez l'OCTAVE pour plus de poids.",
        "Apprenez DISTORTION ou GAIN sur une pédale d'expression pour pousser la saturation au pied pendant un riff.",
        "Fuzz dans le préampli : baissez ensemble le VOLUME du fuzz et le GAIN du préampli ; le fuzz apporte déjà beaucoup de saturation.",
