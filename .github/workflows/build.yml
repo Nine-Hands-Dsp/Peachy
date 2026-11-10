@@ -74,12 +74,18 @@ jobs:
           pack dist/win "Peachy-VST3-Windows.zip" ""
           pack dist/mac "Peachy-VST3-macOS.zip" ""
           ls -l *.zip
+      - name: Notice
+        run: |
+          # derniere notice du dossier docs/ (hors guide MIDI), publiee sous un nom fixe
+          N=$(ls docs/*.pdf 2>/dev/null | grep -vi midi | sort -V | tail -1 || true)
+          if [ -n "$N" ]; then cp "$N" Peachy-Notice.pdf; echo "notice : $N"; else echo "pas de notice"; fi
       - name: Release
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           TAG="v${{ steps.v.outputs.version }}"
           FILES="Peachy-VST3-Windows.zip Peachy-VST3-macOS.zip"
+          [ -f Peachy-Notice.pdf ] && FILES="$FILES Peachy-Notice.pdf"
           if gh release view "$TAG" >/dev/null 2>&1; then
             gh release upload "$TAG" $FILES --clobber
           else
