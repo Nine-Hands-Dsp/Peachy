@@ -1,4 +1,4 @@
-# PEACHY (NINE HANDS | DSP) - notice PDF bilingue (anglais puis francais), illustree avec le rendu reel du plugin.
+# PEACHY (NINE HANDS | DSP) - notice PDF en francais, illustree avec le rendu reel du plugin.
 # Usage : python3 tools/manual.py [<dossier des captures (tools/render)>] <fichier PDF de sortie>
 #   avec captures : recompose les images et les copie dans tools/manual_assets/ ;
 #   sans captures : reprend les images composees de tools/manual_assets/ (extraites de la notice precedente).
@@ -18,51 +18,59 @@ from reportlab.pdfbase.ttfonts import TTFont
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SHOTS = sys.argv[1] if len(sys.argv) > 2 else None
 OUT = sys.argv[-1]
-VERSION = "1.6.2"
+VERSION = "2.0.0"
 TMP = os.path.dirname(os.path.abspath(OUT))
 FONTS = os.path.join(ROOT, "assets", "fonts")
-for n, f in (("Pop", "Poppins-Regular"), ("PopL", "Poppins-Light"), ("PopM", "Poppins-Medium"), ("PopB", "Poppins-Bold")):
+for n, f in (("Pop", "Poppins-Regular"), ("PopL", "Poppins-Light"), ("PopM", "Poppins-Medium"), ("PopB", "Poppins-Bold"),
+             ("Title", "BarlowCondensed-ExtraBold")):
     pdfmetrics.registerFont(TTFont(n, os.path.join(FONTS, f + ".ttf")))
-pdfmetrics.registerFont(TTFont("Hand", os.path.join(FONTS, "ShadowsIntoLight.ttf")))
 
 ACC = colors.HexColor("#D8262C"); ACC_L = colors.HexColor("#FF5A50")
 DARK = colors.HexColor("#1A1516"); GREY = colors.HexColor("#6B6466"); LIGHT = colors.HexColor("#F6E9E8")
 
-# ---------- geometrie (Layout.h, repere 1240 x 928) ----------
-import re
-LAY = open(os.path.join(ROOT, "Layout.h")).read()
-def pt(name): return [float(v) for v in re.search(name + r" \{ ([\d.]+)f, ([\d.]+)f", LAY).groups()]
-KP = [(float(a), float(b)) for a, b in re.findall(r"\{ ([\d.]+)f, ([\d.]+)f \}", LAY.split("knobPos[8] =")[1].split(";")[0])]
-PRES, OCT, LEDL, LEDR, FSL, FSR = pt("presPos"), pt("octPos"), pt("ledL"), pt("ledR"), pt("fsL"), pt("fsR")
-PX0, PY0, PW, PH = [float(v) for v in re.search(r'boxRect \{ ([\d.]+)f, ([\d.]+)f, ([\d.]+)f, ([\d.]+)f', LAY).groups()]
-PR = 43.0
-JACK_OUT_X = float(re.search(r'jackOutX = ([\d.]+)f', LAY).group(1)); JACK_IN_X = float(re.search(r'jackInX = ([\d.]+)f', LAY).group(1))
-JACK_Y = float(re.search(r'jackY = ([\d.]+)f', LAY).group(1))
+# ---------- geometrie (tools/layout.json : repere du plugin 1175 x 900 unites = fond 2350 x 1800 / 2) ----------
+import json, subprocess
+LAY = json.load(open(os.path.join(ROOT, "tools", "layout.json")))
+KP = [(x, y) for _, x, y in LAY["knobs"]]
+OCT = LAY["toggle"]; LEDL, LEDR = LAY["leds"]; FSL, FSR = LAY["footswitches"]
+DX, DY, DW, DH = LAY["display"]
+LOGO_PNG = os.path.join(TMP, "nine_hands_logo_blanc.png")
+def render_logo(svg, png, width=1200):
+    """logo officiel (SVG) rendu par Chromium, fond transparent, recadre sur l'alpha"""
+    from playwright.sync_api import sync_playwright
+    data = open(svg).read()
+    with sync_playwright() as pw:
+        b = pw.chromium.launch(); pg = b.new_page(viewport={"width": width + 40, "height": width // 4})
+        pg.set_content(f'<html><body style="margin:0;background:transparent"><div style="width:{width}px;padding:20px">{data}</div></body></html>')
+        pg.eval_on_selector("svg", "e => { e.setAttribute('width', '%d'); e.removeAttribute('height'); }" % width)
+        pg.screenshot(path=png, omit_background=True, full_page=True); b.close()
+    im = Image.open(png); im.crop(im.getbbox()).save(png)
+render_logo(os.path.join(ROOT, "NineHandsLogoWhite.svg"), LOGO_PNG)
 
 ASSETS = os.path.join(ROOT, "tools", "manual_assets")
 NAMES = ["peachy_annotated.png", "peachy_octave.png", "peachy_leds.png", "peachy_bar.png", "peachy_cover_cutout.png"]
 if SHOTS:
-    src = Image.open(os.path.join(SHOTS, "peachy_status.png")).convert("RGB")
-    k = src.height / 928.0
+    def shot(n): return Image.open(os.path.join(SHOTS, n)).convert("RGB")
+    src = shot("peachy_both.png")
+    k = src.height / 900.0
 
     # ---------- capture annotee ----------
     marks = [(1, *KP[0]), (2, *KP[1]), (3, *KP[2]), (4, *KP[3]), (5, *KP[4]), (6, *KP[5]), (7, *KP[6]), (8, *KP[7]),
-             (9, *PRES), (10, *OCT), (11, *LEDL), (12, *LEDR), (13, *FSL), (14, *FSR), (15, 620, 693), (16, 620, 767),
-             (17, JACK_IN_X, JACK_Y + 24), (18, JACK_OUT_X, JACK_Y + 24)]
-    off = {1: (-70, 0), 2: (-70, 0), 3: (-70, 0), 4: (-70, 0), 5: (-70, 0), 6: (-70, 0), 7: (-70, 0), 8: (-70, 0), 9: (-45, 0),
-           10: (48, 0), 11: (0, -36), 12: (0, -36), 13: (-80, 0), 14: (80, 0), 15: (-252, 0), 16: (-232, 0), 17: (78, 0), 18: (-78, 0)}
+             (9, *KP[8]), (10, *OCT), (11, *LEDL), (12, *LEDR), (13, *FSL), (14, *FSR), (15, DX + DW / 2, DY + DH / 2),
+             (16, 912, 18), (17, 267, 18)]
+    off = {1: (-62, -52), 2: (-62, -52), 3: (-62, -52), 4: (-62, -52), 5: (-62, -52), 6: (-62, -52), 7: (-62, -52), 8: (-62, -52),
+           9: (-46, -30), 10: (40, 0), 11: (0, -34), 12: (0, -34), 13: (82, -40), 14: (-82, -40), 15: (-226, 0), 16: (40, 6), 17: (-40, 6)}
     ann = src.copy(); dr = ImageDraw.Draw(ann)
-    fnt = ImageFont.truetype(os.path.join(FONTS, "Poppins-Bold.ttf"), int(26 * k))
+    fnt = ImageFont.truetype(os.path.join(FONTS, "Poppins-Bold.ttf"), int(19 * k))
     for n, x, y in marks:
         ox, oy = off[n]
-        cx, cy, r = (x + ox) * k, (y + oy) * k, 20 * k
-        dr.ellipse((cx - r, cy - r, cx + r, cy + r), fill=(255, 255, 255), outline=(216, 38, 44), width=int(4 * k))
+        cx, cy, r = (x + ox) * k, (y + oy) * k, 15 * k
+        dr.ellipse((cx - r, cy - r, cx + r, cy + r), fill=(255, 255, 255), outline=(216, 38, 44), width=int(3 * k))
         dr.text((cx, cy + 1), str(n), font=fnt, fill=(26, 21, 22), anchor="mm")
     annotated = os.path.join(TMP, "peachy_annotated.png"); ann.save(annotated)
 
-    def crop_u(path, box):
-        im = Image.open(os.path.join(SHOTS, path)).convert("RGB")
-        kk = im.height / 928.0
+    def crop_u(name, box):
+        im = shot(name); kk = im.height / 900.0
         return im.crop(tuple(int(v * kk) for v in box))
     gap = 18
     def strip(ims, name):
@@ -70,36 +78,25 @@ if SHOTS:
         x = 0
         for m in ims: s.paste(m, (x, 0)); x += m.width + gap
         p = os.path.join(TMP, name); s.save(p); return p
-    # octave off / on ; LED + footswitch off / on
-    ob = (OCT[0] - 80, OCT[1] - 84, OCT[0] + 80, OCT[1] + 60)
+    ob = (OCT[0] - 70, OCT[1] - 80, OCT[0] + 70, OCT[1] + 56)
     oct_img = strip([crop_u("peachy_off.png", ob), crop_u("peachy_both.png", ob)], "peachy_octave.png")
-    lb = (LEDL[0] - 110, LEDL[1] - 60, LEDL[0] + 110, FSL[1] + 70)
+    lb = (LEDL[0] - 110, LEDL[1] - 50, LEDL[0] + 60, FSL[1] + 66)
     led_img = strip([crop_u("peachy_off.png", lb), crop_u("peachy_both.png", lb)], "peachy_leds.png")
-    bar = crop_u("peachy_status.png", (380, 650, 860, 808))
-    bar_img = os.path.join(TMP, "peachy_bar.png"); bar.save(bar_img)
+    bb = (DX - 8, DY - 8, DX + DW + 8, DY + DH + 8)
+    bar_img = os.path.join(TMP, "peachy_bar.png")
+    a1, a2 = crop_u("peachy_both.png", bb), crop_u("peachy_status.png", bb)
+    s2 = Image.new("RGB", (a1.width, a1.height * 2 + 12), (255, 255, 255)); s2.paste(a1, (0, 0)); s2.paste(a2, (0, a1.height + 12)); s2.save(bar_img)
 
-    # ---------- couverture : pedale detouree, reflet au sol, halo rouge tres doux ----------
-    shot = Image.open(os.path.join(SHOTS, "peachy_both.png")).convert("RGB")
-    kk = shot.height / 928.0
-    mk = Image.new("L", shot.size, 0); md = ImageDraw.Draw(mk)
-    md.rounded_rectangle((PX0 * kk, PY0 * kk, (PX0 + PW) * kk, (PY0 + PH) * kk), radius=PR * kk, fill=255)
-    for jx in (JACK_OUT_X, JACK_IN_X):
-        md.rectangle(((jx - 58) * kk, max(0.0, JACK_Y - 16) * kk, (jx + 58) * kk, PY0 * kk + 2), fill=255)
-    arr = np.asarray(shot).astype(np.float32).mean(-1)
-    m = np.asarray(mk).astype(np.float32)
-    body = Image.new("L", shot.size, 0); ImageDraw.Draw(body).rounded_rectangle((PX0 * kk, PY0 * kk, (PX0 + PW) * kk, (PY0 + PH) * kk), radius=PR * kk, fill=255)
-    bm = np.asarray(body).astype(np.float32)
-    m = np.where(bm > 0, bm, m * (arr > 60))          # jacks : seulement le metal (pas le fond sombre)
-    from PIL import ImageFilter
-    mk = Image.fromarray(m.astype(np.uint8)).filter(ImageFilter.GaussianBlur(1.2))
-    cut = Image.new("RGBA", shot.size, (0, 0, 0, 0)); cut.paste(shot, (0, 0), mk)
+    # ---------- couverture : pedale detouree avec le canal alpha du fond (boitier + jacks), reflet au sol, halo rouge tres doux ----------
+    bg_a = Image.open(os.path.join(ROOT, "background.png")).split()[3].resize(src.size, Image.LANCZOS)
+    cut = Image.new("RGBA", src.size, (0, 0, 0, 0)); cut.paste(src, (0, 0), bg_a)
     cut = cut.crop(cut.getbbox())
     cw, ch = cut.size
-    pad = int(cw * 0.14)
+    pad = int(cw * 0.16)
     canvas = Image.new("RGBA", (cw + 2 * pad, int(ch * 1.30) + pad), (0, 0, 0, 255))
     yy, xx = np.mgrid[0:canvas.height, 0:canvas.width].astype(np.float64)
     gcx, gcy = canvas.width / 2, pad + ch * 0.45
-    glow = np.exp(-(((xx - gcx) / (cw * 0.62)) ** 2 + ((yy - gcy) / (ch * 0.48)) ** 2)) * 40
+    glow = np.exp(-(((xx - gcx) / (cw * 0.62)) ** 2 + ((yy - gcy) / (ch * 0.48)) ** 2)) * 36
     edge = np.clip(np.minimum.reduce([xx, canvas.width - 1 - xx, yy, canvas.height - 1 - yy]) / (pad * 0.9), 0, 1)
     glow *= edge ** 2
     halo = np.dstack([glow * 0.95, glow * 0.12, glow * 0.12, np.full_like(glow, 255)]).astype(np.uint8)
@@ -156,7 +153,7 @@ FACTORY = [  # nom, master, gain, vol, dist, bass, mid, treb, tone, pres, oct, p
     ("Gritty Boost",             6.0, 2.2, 5.0, 7.5, 5.0, 6.0, 6.0, 5.0, 5.5, 0, 1, 0),
     ("Capture Reference G75 T5", 5.0, 6.0, 5.0, 7.5, 5.0, 5.0, 5.0, 5.0, 5.0, 0, 0, 1)]
 DESC = {
- "en": ["Preamp only: tight, saturated crunch with a light mid scoop, the starting point.",
+ "en_unused": ["Preamp only: tight, saturated crunch with a light mid scoop, the starting point.",
         "More gain, deeper scoop and more presence for low-tuned 7-string riffs and palm mutes.",
         "High gain, bass up, mids down, treble up: the classic scooped rhythm wall.",
         "Fuzz only, exactly as captured at noon tone: woolly, thick, long sustain.",
@@ -179,86 +176,8 @@ DESC = {
 def pc(v): return f"{round(v * 10)} %"
 
 T = {
-"en": dict(
- lang="ENGLISH", sub="Preamp + fuzz &nbsp;·&nbsp; VST3 for Windows and macOS", ver="User manual &nbsp;·&nbsp; version " + VERSION,
- intro_t="1. Introduction",
- intro=["<b>PEACHY</b> is a NINE HANDS | DSP plugin modelled on the KoRn <b>Indigo Ranch</b> signature pedal, a double pedal that combines a "
-        "high-gain <b>preamp</b> and a separate <b>fuzz</b> with a low <b>octave</b>, voiced after the guitar sounds of the band's mid-90s "
-        "records (tight, saturated crunch for 7-string riffs; woolly, sustain-heavy fuzz). NINE HANDS | DSP is not affiliated with the band or the maker of the pedal.",
-        "The <b>fuzz is the real pedal</b>: it is played by 45 NAM captures of the fuzz section (distortion 50 to 100 %, tone 1 to 9). "
-        "Analysis showed that the TONE knob acts as a linear filter after the clipping, so Peachy runs the five TONE 5 captures as neural "
-        "networks (NeuralAmpModelerCore), fades between the two nearest ones when you turn DISTORTION, and applies an exact model of the TONE "
-        "filter measured on the nine captured positions. Checked against the captures, the difference is of the same order as the error of the captures themselves.",
-        "The <b>preamp</b> was not captured: it is modelled as a high-gain tube preamp (two clipping stages with an asymmetric triode curve, "
-        "low end tightened before the clipping, passive 3-band tone stack computed exactly, presence at the output), with 4x oversampling.",
-        "Signal path: input &gt; OCTAVE &gt; FUZZ &gt; PREAMP &gt; output; the fuzz drives the preamp, as on the pedal."],
- inst_t="2. Installation",
- inst=[("Windows", "Download the <b>Peachy-VST3-Windows</b> artifact from the Actions tab of the GitHub repository Nine-Hands-Dsp/lifeispeachy, unzip it and copy the <b>Peachy.vst3</b> folder into <b>C:\\Program Files\\Common Files\\VST3</b>."),
-       ("macOS", "Download <b>Peachy-VST3-macOS</b>, unzip it and copy <b>Peachy.vst3</b> into <b>~/Library/Audio/Plug-Ins/VST3</b>. If macOS blocks it, run <b>xattr -cr ~/Library/Audio/Plug-Ins/VST3/Peachy.vst3</b> in the Terminal. The binary is universal (Apple Silicon and Intel)."),
-       ("Reaper", "Options &gt; Preferences &gt; Plug-ins &gt; VST &gt; <b>Re-scan</b>. The plugin appears as <b>Peachy (NINE HANDS | DSP)</b>. To control it from MIDI footswitches and expression pedals, the track must receive MIDI from your controller (e.g. the M-Vave Chocolate Plus).")],
- ov_t="3. Interface overview",
- ov_rows=[["#", "Control", "Role"],
-   ["1", "MASTER", "Preamp output level."], ["2", "GAIN", "Preamp gain."], ["3", "VOLUME", "Fuzz output level."],
-   ["4", "DISTORTION", "Fuzz gain."], ["5", "BASS", "Preamp bass."], ["6", "MID", "Preamp mids."], ["7", "TREBLE", "Preamp treble."],
-   ["8", "TONE", "Fuzz tone (dark / bright)."], ["9", "PRESENCE", "Preamp presence (small knob)."],
-   ["10", "OCTAVE", "Octave doubler of Semitones (lever up = on), works with or without the fuzz."],
-   ["11", "LED left", "Preamp on."], ["12", "LED right", "Fuzz on."],
-   ["13", "Left footswitch", "Preamp on / off."], ["14", "Right footswitch", "Fuzz on / off."],
-   ["15", "Status line", "Setting of the control you just moved."], ["16", "Preset bar", "Arrows = previous / next, name = preset menu."],
-   ["17", "IN", "Input jack (top right)."], ["18", "OUT", "Output jack (top left)."]],
- ctl_t="4. Controls in detail",
- ctl=[("GAIN (preamp)", "From about 6 dB to 56 dB, spread over two tube-like stages. Low settings give an edgy, gritty boost; from noon the sound becomes the tight, saturated crunch of the pedal; the top of the travel adds sustain and density. The low end is tightened before the clipping so low-tuned riffs stay defined."),
-      ("BASS · MID · TREBLE (preamp)", "Passive tone stack after the clipping, as in a British amp head (exact analog transfer function). The three controls interact like on an amp: MID at minimum gives the deep scoop, BASS follows a logarithmic taper, TREBLE adds bite. All three only act on the preamp."),
-      ("PRESENCE (preamp)", "High shelf at 3.2 kHz, about −10 to +10 dB, same slope on both sides of noon: more attack and air, or a softer top end."),
-      ("MASTER (preamp) · VOLUME (fuzz)", "Output level of each section. Noon = reference level (for the fuzz: the level of the captures), full = about +10 dB, 0 = muted. The two sections can be levelled independently so that switching between them does not jump."),
-      ("DISTORTION (fuzz)", "From 50 % to 100 % the sound comes straight from the captures of the real pedal, with a smooth fade between the two nearest captured positions (50, 65, 75, 90, 100 %). Below 50 % the 50 % capture is driven by a lower input level: less saturation, more of the pick attack, as when turning the real knob down."),
-      ("TONE (fuzz)", "Exact model of the pedal's TONE filter, measured on the nine captured positions (rms error 0.4 dB): counter-clockwise rolls off the highs (dark, woolly), clockwise cuts the lows and lifts the highs (thin, bright, cutting). Knob position 0 to 10 covers the captured range 1 to 9; noon = 5."),
-      ("OCTAVE", "Switches on exactly the Octave doubler (-12) preset of our Semitones pedal, placed in front of Peachy: the same pitch-shifting engine transposes your guitar one octave down and blends it 50 / 50 with your dry signal (equal power, so the level stays the same). The doubled signal then goes into the fuzz and the preamp when they are on, and straight to the output when both footswitches are off.")],
- oct_cap="OCTAVE switch off (lever down) and on (lever up).",
- fs_t="5. Footswitches, LEDs and noise gate",
- fs=["<b>Footswitches</b>: black footswitches. Left = PREAMP, right = FUZZ, each independent. They switch as soon as you press them; while you hold the mouse button the cap stays pushed down (it sinks, gets darker and its shadow shortens). Hold for more than 0.45 s after turning a section on and it works as a momentary switch (it turns off when you release it); right-click &gt; <b>Settings</b> to disable.",
-     "<b>LEDs</b>: white, left = preamp on, right = fuzz on, with a fade, a white halo and the panel lit around them.",
-     "<b>Bypass</b>: each section passes the dry signal when off, time-aligned with the latency reported to the DAW (no clicks, crossfaded).",
-     "<b>Noise gate</b> (right-click &gt; Noise gate): Off, <b>Light</b> (default), Medium or Strong. It listens to the input, opens instantly on the next note and lets notes fade naturally; it only acts when a section is on.",
-     "Everything can also be automated in the DAW (all knobs, Octave, Preamp Footswitch, Fuzz Footswitch)."],
- midi_t="6. MIDI",
- midi_txt=["<b>MIDI Learn on every control</b>: right-click a control (any of the 9 knobs, the OCTAVE switch or one of the footswitches). The top of the menu shows <b>MIDI Learn: &lt;Name&gt; (CC n / none)</b> with the current assignment, <b>Clear MIDI: &lt;Name&gt;</b> and, while a learn is waiting, <b>Cancel MIDI learn</b>. Choose MIDI Learn, then move a pedal or knob or press a footswitch of your controller: the status line shows <b>MIDI LEARN: move a control for &lt;Name&gt;</b>, then <b>&lt;Name&gt; = CC n</b> for 2 seconds.",
-           "Every right-click menu (on a control or anywhere else on the pedal) also has the <b>MIDI map</b> submenu: <b>Learn</b> for each of the 12 controls (with its current assignment), <b>Cancel MIDI learn</b> (while a learn is waiting) and <b>Clear all MIDI assignments</b>, plus a reminder of the map. Choosing the pending item again also cancels the learn.",
-           "<b>No CC is assigned by default</b>: Peachy does not react to any CC until you have learned one. Older projects that still had the former factory map open with no assignment; a project in which you had changed at least one assignment keeps its assignments.",
-           "A CC number can only drive one control: learning a CC that is already used removes it from the other control. Learn accepts CC 0 to 119; Peachy listens on all MIDI channels. <b>Assignments are saved with the project</b> (and with DAW presets)."],
- midi_hdr=["Control", "Type"],
- midi=[["Master", "Continuous"], ["Gain", "Continuous"], ["Volume (fuzz)", "Continuous"], ["Distortion", "Continuous"],
-       ["Bass", "Continuous"], ["Mid", "Continuous"], ["Treble", "Continuous"], ["Tone (fuzz)", "Continuous"], ["Presence", "Continuous"],
-       ["Octave", "Switch: 64 and above = on, below 64 = off"],
-       ["Preamp footswitch", "Footswitch: latching (127 = on / 0 = off) or momentary (toggle on each press)"],
-       ["Fuzz footswitch", "Footswitch: latching (127 = on / 0 = off) or momentary (toggle on each press)"]],
- midi2=["<b>Knobs</b>: 0-127 covers the whole travel; a knob on CC 0-31 also accepts the 14-bit fine part on CC n+32 (n = the learned CC). Expression pedals are smooth: ramps between messages and automatic learning of your pedal's real travel (0 and 100 % are always reached).",
-        "<b>MIDI footswitches</b>: right-click &gt; <b>Settings</b> &gt; <b>MIDI footswitches latching (127 = on / 0 = off)</b> (default) or <b>MIDI footswitches momentary (toggle each press)</b>.",
-        "<b>Program Change</b> 1-10 loads the factory presets."],
- led_cap="Preamp section off, then on (LED lit).",
- win_t="7. Window",
- win=["Peachy uses the double pedal format of Ring Think. Right-click &gt; <b>Plugin size</b>: <b>60 %</b>, <b>75 %</b>, <b>100 %</b> resizes this window; <b>(default)</b> marks the default size you have chosen. At the bottom of this submenu, <b>Default size (new windows)</b> chooses the size at which every new window of Peachy opens (one setting shared by all instances, saved on the computer); the open window also takes this size at once. The size is not saved with the project: each time it is opened, the window comes back at the default size. It can never be made smaller than 60 %; you can also drag the bottom-right corner to enlarge it (proportions kept).",
-      "The <b>status line</b> shows the MIDI Learn messages, otherwise only the setting of the control you just moved (knobs in %, e.g. <i>distortion 82 %</i>, <i>fuzz on</i>) in the handwriting of the pedal and fades out after 2.5 s. The <b>preset bar</b> under it always shows the current preset."],
- bar_cap="Status line and preset bar.",
- pre_t="8. Presets",
- pre=["Use the arrows of the preset bar, click its name, right-click anywhere, or the preset menu of your DAW. Right-click &gt; <b>Save user preset</b> stores up to 9 presets of your own. Presets include the footswitch and octave states."],
- fac_hdr=["PC", "Preset", "Preamp: master / gain · bass / mid / treble · presence", "Fuzz: volume / distortion / tone", "On", "Description"],
- tips_t="9. Tips",
- tips=["In Reaper, place Peachy <b>before</b> your amp simulator (for example before Ampire, followed by Impulse for the cab) with a fairly clean amp, as with the real pedal; the preamp can also go straight into a power amp / cabinet model.",
-       "For a 7-string tuned to G or lower: keep BASS around noon, raise PRESENCE a little, and add the OCTAVE for extra weight.",
-       "Learn DISTORTION or GAIN on an expression pedal to push the saturation with your foot during a riff.",
-       "Fuzz into preamp: lower the fuzz VOLUME and the preamp GAIN together; the fuzz already brings a lot of saturation.",
-       "Between two captured DISTORTION positions Peachy runs two networks at once (about 20 % of one core at 48 kHz); at a captured position (50, 65, 75, 90 or 100 %) only one runs."],
- tech_t="10. Specifications",
- tech=[["Format", "VST3 (Windows 64-bit, macOS universal)"], ["Channels", "Mono or stereo (processed in mono, like the pedal)"],
-       ["Latency", "32 samples at 48 kHz (preamp oversampling), more at other rates (resampling to the 48 kHz of the captures); reported to the DAW"],
-       ["Fuzz", "5 NAM WaveNet captures (distortion 50 / 65 / 75 / 90 / 100 %), exact TONE filter"], ["Octave", "Semitones engine (pitch-synchronous splicing, YIN tracking down to 31 Hz), -12 semitones, 50 / 50 equal-power blend"],
-       ["Preamp", "6 to 56 dB gain, 4x oversampling, passive 3-band tone stack, presence ±10 dB"],
-       ["MIDI", "MIDI Learn on all 12 controls (saved with the project), no CC assigned by default, 14-bit on CC n+32, Program Change 1-10, all channels"],
-       ["Window", "Plugin size 60 % (minimum), 75 %, 100 %, default size of new windows to choose (60 % at first); anti-freeze v2 on Windows (software rendering, display caches rebuilt by a timer, redraw watchdog, no call to the host from the audio thread)"],
-       ["Version", VERSION], ["CPU", "about 3 % (preamp), 10 to 20 % (fuzz) of one core at 48 kHz"]]),
 "fr": dict(
- lang="FRANÇAIS", sub="Préampli + fuzz &nbsp;·&nbsp; VST3 pour Windows et macOS", ver="Notice d'utilisation &nbsp;·&nbsp; version " + VERSION,
+ lang="FRANÇAIS", sub="Préampli + fuzz", ver="",
  intro_t="1. Présentation",
  intro=["<b>PEACHY</b> est un plugin NINE HANDS | DSP inspiré de la pédale signature KoRn <b>Indigo Ranch</b>, une pédale double qui réunit un "
         "<b>préampli</b> high gain et un <b>fuzz</b> séparé avec une <b>octave</b> grave, au son des guitares des disques du groupe du milieu des années 90 "
@@ -269,10 +188,11 @@ T = {
         "filtre TONE mesuré sur les neuf positions capturées. Comparé aux captures, l'écart est du même ordre que l'erreur des captures elles-mêmes.",
         "Le <b>préampli</b> n'a pas été capturé : il est modélisé comme un préampli à lampes high gain (deux étages d'écrêtage à courbe de triode asymétrique, "
         "grave serré avant l'écrêtage, tone stack passif 3 bandes calculé exactement, présence en sortie), avec un sur-échantillonnage x4.",
-        "Trajet du signal : entrée &gt; OCTAVE &gt; FUZZ &gt; PREAMP &gt; sortie ; le fuzz attaque le préampli, comme sur la pédale."],
+        "Trajet du signal : entrée &gt; OCTAVE &gt; FUZZ &gt; PREAMP &gt; sortie ; le fuzz attaque le préampli, comme sur la pédale.",
+        "Depuis la version 2, l'interface reprend le visuel peint de la pédale (inscriptions manuscrites, silhouette, écran de presets) : potards en métal brossé animés, inverseur et LED rouges en photo, footswitchs hexagonaux noirs."],
  inst_t="2. Installation",
- inst=[("Windows", "Téléchargez l'artefact <b>Peachy-VST3-Windows</b> dans l'onglet Actions du dépôt GitHub Nine-Hands-Dsp/lifeispeachy, décompressez-le et copiez le dossier <b>Peachy.vst3</b> dans <b>C:\\Program Files\\Common Files\\VST3</b>."),
-       ("macOS", "Téléchargez <b>Peachy-VST3-macOS</b>, décompressez-le et copiez <b>Peachy.vst3</b> dans <b>~/Bibliothèque/Audio/Plug-Ins/VST3</b>. Si macOS le bloque, tapez <b>xattr -cr ~/Library/Audio/Plug-Ins/VST3/Peachy.vst3</b> dans le Terminal. Le binaire est universel (Apple Silicon et Intel)."),
+ inst=[("Windows", "Téléchargez l'artefact <b>Peachy-VST3-Windows.zip</b> avec le bouton « Télécharger Windows » de la page GitHub Nine-Hands-Dsp/Peachy (toujours la dernière version), décompressez-le et copiez le dossier <b>Peachy.vst3</b> dans <b>C:\\Program Files\\Common Files\\VST3</b>."),
+       ("macOS", "Téléchargez <b>Peachy-VST3-macOS.zip</b> (bouton « Télécharger macOS »), décompressez-le et copiez <b>Peachy.vst3</b> dans <b>~/Bibliothèque/Audio/Plug-Ins/VST3</b>. Si macOS le bloque, tapez <b>xattr -cr ~/Library/Audio/Plug-Ins/VST3/Peachy.vst3</b> dans le Terminal. Le binaire est universel (Apple Silicon et Intel)."),
        ("Reaper", "Options &gt; Préférences &gt; Plug-ins &gt; VST &gt; <b>Re-scan</b>. Le plugin apparaît sous le nom <b>Peachy (NINE HANDS | DSP)</b>. Pour le piloter avec des footswitchs et pédales d'expression MIDI, la piste doit recevoir le MIDI de votre contrôleur (par exemple la M-Vave Chocolate Plus).")],
  ov_t="3. Vue d'ensemble de l'interface",
  ov_rows=[["#", "Commande", "Rôle"],
@@ -282,8 +202,8 @@ T = {
    ["10", "OCTAVE", "Octave doubler de Semitones (levier haut = on), avec ou sans fuzz."],
    ["11", "LED gauche", "Préampli enclenché."], ["12", "LED droite", "Fuzz enclenché."],
    ["13", "Footswitch gauche", "Préampli on / off."], ["14", "Footswitch droit", "Fuzz on / off."],
-   ["15", "Ligne d'état", "Réglage de la commande que vous venez de bouger."], ["16", "Barre de presets", "Flèches = précédent / suivant, nom = menu des presets."],
-   ["17", "IN", "Jack d'entrée (en haut à droite)."], ["18", "OUT", "Jack de sortie (en haut à gauche)."]],
+   ["15", "Écran", "Preset en cours (flèches = précédent / suivant, nom = menu) ; pendant un réglage, la ligne d'état prend sa place."],
+   ["16", "IN", "Jack d'entrée (en haut à droite)."], ["17", "OUT", "Jack de sortie (en haut à gauche)."]],
  ctl_t="4. Les commandes en détail",
  ctl=[("GAIN (préampli)", "D'environ 6 dB à 56 dB, répartis sur deux étages façon lampe. En bas de course, un boost mordant et granuleux ; dès midi, le crunch serré et saturé de la pédale ; le haut de la course ajoute du sustain et de la densité. Le grave est resserré avant l'écrêtage pour que les riffs accordés bas restent définis."),
       ("BASS · MID · TREBLE (préampli)", "Tone stack passif après l'écrêtage, comme dans une tête d'ampli britannique (fonction de transfert analogique exacte). Les trois commandes interagissent comme sur un ampli : MID au minimum donne le gros creux de médiums, BASS suit une courbe logarithmique, TREBLE ajoute du mordant. Elles n'agissent que sur le préampli."),
@@ -294,14 +214,14 @@ T = {
       ("OCTAVE", "Enclenche exactement le preset Octave doubler (-12) de notre pédale Semitones, placé devant Peachy : le même moteur de transposition descend votre guitare d'une octave et la mélange à 50 / 50 avec le son direct (à puissance égale, le niveau ne change pas). Le signal doublé entre ensuite dans le fuzz et le préampli s'ils sont enclenchés, et va droit en sortie deux footswitchs coupés.")],
  oct_cap="Inverseur OCTAVE coupé (levier en bas) et enclenché (levier en haut).",
  fs_t="5. Footswitchs, LED et noise gate",
- fs=["<b>Footswitchs</b> : footswitchs noirs. Gauche = PREAMP, droit = FUZZ, indépendants. Ils basculent dès l'appui ; tant qu'on garde le bouton de la souris enfoncé, le bouton reste enfoncé (il descend, s'assombrit et son ombre se raccourcit). Maintenu plus de 0,45 s après avoir enclenché une section, il fonctionne en momentané (la section se coupe au relâchement) ; clic droit &gt; <b>Settings</b> pour désactiver.",
-     "<b>LED</b> : blanches, gauche = préampli actif, droite = fuzz actif, avec fondu, halo blanc et façade éclairée autour.",
+ fs=["<b>Footswitchs</b> : footswitchs hexagonaux noirs. Gauche = PREAMP, droit = FUZZ, indépendants. Ils basculent dès l'appui ; tant qu'on garde le bouton de la souris enfoncé, le bouton reste enfoncé (il descend dans sa bague et s'assombrit). Maintenu plus de 0,45 s après avoir enclenché une section, il fonctionne en momentané (la section se coupe au relâchement) ; clic droit &gt; <b>Settings</b> pour désactiver.",
+     "<b>LED</b> : rouges, gauche = préampli actif, droite = fuzz actif, allumage et extinction en fondu ; éteintes, la lentille reste visible, rouge sombre. Allumées, elles éclairent la façade autour d'elles : clic droit &gt; <b>Glow (halo of the lights)</b> règle ce halo à 25, 50, 75 ou 100 % (par défaut), réglage commun à toutes les fenêtres de Peachy ; la LED elle-même reste toujours à pleine intensité.",
      "<b>Bypass</b> : chaque section coupée laisse passer le signal sec, aligné sur la latence annoncée au DAW (sans clic, en fondu).",
      "<b>Noise gate</b> (clic droit &gt; Noise gate) : Off, <b>Light</b> (par défaut), Medium ou Strong. Il écoute l'entrée, s'ouvre instantanément à la note suivante et laisse les notes s'éteindre naturellement ; il n'agit que si une section est enclenchée.",
      "Tout est aussi automatisable dans le DAW (tous les potards, Octave, Preamp Footswitch, Fuzz Footswitch)."],
  midi_t="6. MIDI",
- midi_txt=["<b>MIDI Learn sur toutes les commandes</b> : faites un clic droit sur une commande (l'un des 9 potards, l'inverseur OCTAVE ou l'un des footswitchs). Le haut du menu affiche <b>MIDI Learn: &lt;Nom&gt; (CC n / none)</b> avec l'assignation actuelle, <b>Clear MIDI: &lt;Nom&gt;</b> et, tant qu'un apprentissage est en attente, <b>Cancel MIDI learn</b>. Choisissez MIDI Learn puis bougez une pédale, un bouton ou appuyez sur un footswitch de votre contrôleur : la ligne d'état affiche <b>MIDI LEARN: move a control for &lt;Nom&gt;</b>, puis <b>&lt;Nom&gt; = CC n</b> pendant 2 secondes.",
-           "Chaque menu clic droit (sur une commande ou ailleurs sur la pédale) contient aussi le sous-menu <b>MIDI map</b> : <b>Learn</b> pour chacune des 12 commandes (avec son assignation actuelle), <b>Cancel MIDI learn</b> (tant qu'un apprentissage est en attente) et <b>Clear all MIDI assignments</b>, plus un rappel de la table. Choisir de nouveau la commande en attente annule aussi l'apprentissage.",
+ midi_txt=["<b>MIDI Learn sur toutes les commandes</b> : faites un clic droit sur une commande (l'un des 9 potards, l'inverseur OCTAVE ou l'un des footswitchs). Le menu s'ouvre là où vous cliquez ; son en-tête donne le nom de la commande et son assignation (<b>MIDI: CC n</b> ou <b>MIDI: not assigned</b>), suivi de <b>MIDI Learn</b>, <b>Clear MIDI</b> et, tant qu'un apprentissage est en attente, <b>Cancel MIDI learn</b>. Choisissez MIDI Learn puis bougez une pédale, un bouton ou appuyez sur un footswitch de votre contrôleur : l'écran affiche <b>MIDI LEARN · &lt;Nom&gt;</b>, puis <b>&lt;Nom&gt; = CC n</b> pendant 2 secondes.",
+           "Chaque menu clic droit (sur une commande ou ailleurs sur la pédale) contient aussi le sous-menu <b>MIDI</b> : <b>MIDI Learn</b> pour chacune des 12 commandes (avec son assignation actuelle), <b>Cancel MIDI learn</b> (tant qu'un apprentissage est en attente) et <b>Clear all MIDI assignments</b>. Choisir de nouveau la commande en attente annule aussi l'apprentissage.",
            "<b>Aucun CC n'est assigné par défaut</b> : Peachy ne réagit à aucun CC tant que vous n'en avez pas appris un. Les anciens projets restés sur l'ancienne table d'usine s'ouvrent sans assignation ; un projet où vous aviez changé au moins une assignation garde ses assignations.",
            "Un numéro de CC ne pilote qu'une seule commande : apprendre un CC déjà utilisé le retire de l'autre commande. L'apprentissage accepte les CC 0 à 119 ; Peachy écoute tous les canaux MIDI. <b>Les assignations sont sauvegardées avec le projet</b> (et avec les presets du DAW)."],
  midi_hdr=["Commande", "Type"],
@@ -315,11 +235,11 @@ T = {
         "<b>Program Change</b> 1 à 10 : presets usine."],
  led_cap="Section préampli coupée, puis enclenchée (LED allumée).",
  win_t="7. Fenêtre",
- win=["Peachy utilise le format pédale double de Ring Think. Clic droit &gt; <b>Plugin size</b> : <b>60 %</b>, <b>75 %</b>, <b>100 %</b> redimensionne cette fenêtre ; <b>(default)</b> signale la taille par défaut choisie. En bas de ce sous-menu, <b>Default size (new windows)</b> choisit la taille d'ouverture de toutes les nouvelles fenêtres de Peachy (réglage commun à toutes les instances, enregistré sur l'ordinateur) ; la fenêtre ouverte prend aussi tout de suite cette taille. La taille n'est pas sauvegardée avec le projet : à chaque ouverture, la fenêtre revient à la taille par défaut. Elle ne peut jamais être réduite sous 60 % ; on peut aussi tirer le coin en bas à droite pour l'agrandir (proportions conservées).",
-      "La <b>ligne d'état</b> affiche les messages du MIDI Learn, sinon seulement le réglage de la commande que vous venez de bouger (potards en %, par ex. <i>distortion 82 %</i>, <i>fuzz on</i>) dans l'écriture manuscrite de la pédale, et s'efface au bout de 2,5 s. La <b>barre de presets</b> en dessous affiche en permanence le preset en cours."],
- bar_cap="Ligne d'état et barre de presets.",
+ win=["Peachy utilise le format pédale double (même hauteur d'ouverture que Ring Think). Les menus clic droit ont le design d'Octopus et s'ouvrent toujours là où vous cliquez. Clic droit &gt; <b>Plugin size</b> : <b>60 %</b>, <b>75 %</b>, <b>100 %</b> redimensionne cette fenêtre ; <b>(default)</b> signale la taille par défaut choisie. En bas de ce sous-menu, <b>Default size (new windows)</b> choisit la taille d'ouverture de toutes les nouvelles fenêtres de Peachy (réglage commun à toutes les instances, enregistré sur l'ordinateur) ; la fenêtre ouverte prend aussi tout de suite cette taille. La taille n'est pas sauvegardée avec le projet : à chaque ouverture, la fenêtre revient à la taille par défaut. Elle ne peut jamais être réduite sous 60 % ; on peut aussi tirer le coin en bas à droite pour l'agrandir (proportions conservées).",
+      "L'<b>écran</b> de la pédale affiche le preset en cours. Dès qu'un réglage bouge (souris, molette, automation, MIDI), la <b>ligne d'état</b> prend sa place avec la valeur en direct (potards en %, par ex. <i>Distortion 82 %</i>, <i>Fuzz ON</i>, messages du MIDI Learn), puis s'efface en fondu 2,5 s après le dernier mouvement et le preset revient. Un clic sur l'écran pendant ce temps fait revenir le preset tout de suite."],
+ bar_cap="Écran : preset en cours, puis ligne d'état pendant un réglage.",
  pre_t="8. Presets",
- pre=["Utilisez les flèches de la barre de presets, cliquez sur son nom, faites un clic droit n'importe où, ou passez par le menu de presets du DAW. Clic droit &gt; <b>Save user preset</b> enregistre jusqu'à 9 presets personnels. Les presets incluent l'état des footswitchs et de l'octave."],
+ pre=["Utilisez les flèches de l'écran, cliquez sur le nom du preset, faites un clic droit n'importe où, ou passez par le menu de presets du DAW. Clic droit &gt; <b>Save user preset</b> enregistre jusqu'à 9 presets personnels. Les presets incluent l'état des footswitchs et de l'octave."],
  fac_hdr=["PC", "Preset", "Préampli : master / gain · bass / mid / treble · presence", "Fuzz : volume / distortion / tone", "Actif", "Description"],
  tips_t="9. Conseils d'utilisation",
  tips=["Dans Reaper, placez Peachy <b>avant</b> votre simulateur d'ampli (par exemple avant Ampire, suivi d'Impulse pour le baffle) avec un ampli assez clair, comme avec la vraie pédale ; le préampli peut aussi aller directement dans un modèle d'ampli de puissance / baffle.",
@@ -333,7 +253,7 @@ T = {
        ["Fuzz", "5 captures NAM WaveNet (distortion 50 / 65 / 75 / 90 / 100 %), filtre TONE exact"], ["Octave", "Moteur de Semitones (raccords synchronisés sur la période, suivi YIN jusqu'à 31 Hz), -12 demi-tons, mélange 50 / 50 à puissance égale"],
        ["Préampli", "gain 6 à 56 dB, sur-échantillonnage x4, tone stack passif 3 bandes, présence ±10 dB"],
        ["MIDI", "MIDI Learn sur les 12 commandes (sauvegardé avec le projet), aucun CC assigné par défaut, 14 bits sur CC n+32, Program Change 1 à 10, tous canaux"],
-       ["Fenêtre", "Plugin size 60 % (minimum), 75 %, 100 %, taille par défaut des nouvelles fenêtres au choix (60 % au départ) ; anti-gel v2 sous Windows (rendu logiciel, caches d'affichage refaits par un timer, chien de garde de redessin, aucun appel à l'hôte depuis le thread audio)"],
+       ["Fenêtre", "Plugin size 60 % (minimum), 75 %, 100 %, taille par défaut des nouvelles fenêtres au choix (60 % au départ) ; potards animés avec flou de mouvement ; Glow 25 à 100 % ; anti-gel v2 sous Windows (rendu logiciel, caches d'affichage refaits par un timer, chien de garde de redessin, aucun appel à l'hôte depuis le thread audio)"],
        ["Version", VERSION], ["Processeur", "environ 3 % (préampli), 10 à 20 % (fuzz) d'un cœur à 48 kHz"]]),
 }
 
@@ -341,18 +261,14 @@ W = A4[0] - 36 * mm
 def section(lang):
     t = T[lang]; f = []
     f.append(NextPageTemplate("p"))
-    f.append(Spacer(1, 2 * mm)); f.append(P(t["lang"], "coverlang")); f.append(Spacer(1, 4 * mm))
-    f.append(img(cover, W * 0.80)); f.append(Spacer(1, 3 * mm))
-    f.append(P("P E A C H Y", "cover")); f.append(P(t["sub"], "coversub")); f.append(Spacer(1, 2 * mm))
-    f.append(P(t["ver"], "coversub")); f.append(Spacer(1, 8 * mm))
-    f.append(img(os.path.join(ROOT, "assets", "logo_studio_wiga_blanc.png"), 52 * mm))
+    COVER_TEXT.update(lang=t["lang"], sub=t["sub"])           # couverture dessinee a positions fixes (cover_bg)
     f.append(PageBreak())
     f.append(P(t["intro_t"], "h1")); f += [P(x) for x in t["intro"]]
     f.append(P(t["inst_t"], "h1"))
     for h, x in t["inst"]: f.append(P(h, "h2")); f.append(P(x))
     f.append(PageBreak())
     f.append(P(t["ov_t"], "h1"))
-    f.append(img(annotated, W))
+    f.append(img(annotated, W * 0.86))
     f.append(Spacer(1, 3 * mm))
     f.append(table(t["ov_rows"], [10 * mm, 38 * mm, W - 48 * mm]))
     f.append(PageBreak())
@@ -389,14 +305,38 @@ def deco(c, doc):
     c.drawString(18 * mm, 10 * mm, "Peachy (NINE HANDS | DSP) · v" + VERSION)
     c.drawRightString(A4[0] - 18 * mm, 10 * mm, str(doc.page))
     c.restoreState()
+doc = BaseDocTemplate(OUT, pagesize=A4, leftMargin=18 * mm, rightMargin=18 * mm, topMargin=16 * mm, bottomMargin=18 * mm,
+                      title="PEACHY - Notice v" + VERSION, author="NINE HANDS | DSP")
+# ---- Couverture « minimale » (modele 6) : gabarit fixe commun a toutes les notices NINE HANDS | DSP ----
+COVER_TEXT = {}
+COVER_NAME = "PEACHY"
+PEDAL_H, PEDAL_MAXW, PEDAL_TOP = 82 * mm, 115 * mm, 84 * mm
+LANG_TOP = 18 * mm
+NAME_TOP, NAME_PT = 194 * mm, 30
+SUB_TOP, SUB_PT = 208 * mm, 10
+LOGO_W, LOGO_BOTTOM = 38 * mm, 22 * mm
+BAND_H = 3 * mm
 def cover_bg(c, doc):
     c.saveState(); c.setFillColor(colors.black); c.rect(0, 0, A4[0], A4[1], stroke=0, fill=1)
-    c.setFillColor(ACC); c.rect(0, A4[1] - 3 * mm, A4[0], 3 * mm, stroke=0, fill=1); c.restoreState()
-doc = BaseDocTemplate(OUT, pagesize=A4, leftMargin=18 * mm, rightMargin=18 * mm, topMargin=16 * mm, bottomMargin=18 * mm,
-                      title="PEACHY - Manual / Notice v" + VERSION, author="NINE HANDS | DSP")
+    c.setFillColor(ACC); c.rect(0, 0, A4[0], BAND_H, stroke=0, fill=1)
+    def line(text, top, font, size, cs, col):
+        w = pdfmetrics.stringWidth(text, font, size) + cs * (len(text) - 1)
+        t = c.beginText((A4[0] - w) / 2, A4[1] - top - size * 0.8); t.setFont(font, size); t.setCharSpace(cs)
+        t.setFillColor(col); t.textOut(text); c.drawText(t)
+    line(COVER_TEXT["lang"], LANG_TOP, "PopM", 8.5, 0, ACC_L)
+    ci = Image.open(cover); iw, ih = ci.size
+    cw = iw / 1.32; ch = (ih - int(cw * 0.16)) / 1.2; pad = int(cw * 0.16)     # geometrie de peachy_cover_cutout.png
+    k = min(PEDAL_H / ch, PEDAL_MAXW / cw)
+    dw, dh = iw * k, ih * k
+    y0 = A4[1] - (PEDAL_TOP + (PEDAL_H - ch * k) / 2) + pad * k
+    c.drawImage(cover, (A4[0] - dw) / 2, y0 - dh, dw, dh)
+    line(COVER_NAME, NAME_TOP - NAME_PT * 0.02, "Title", NAME_PT, NAME_PT * 0.5, colors.white)
+    line(COVER_TEXT["sub"], SUB_TOP, "Pop", SUB_PT, 1.5, colors.HexColor("#BDC4B8"))
+    lw, lh = Image.open(LOGO_PNG).size
+    c.drawImage(LOGO_PNG, (A4[0] - LOGO_W) / 2, LOGO_BOTTOM, LOGO_W, LOGO_W * lh / lw, mask="auto")
+    c.restoreState()
 doc.addPageTemplates([PageTemplate(id="cover", frames=[Frame(doc.leftMargin, doc.bottomMargin, doc.width, doc.height, id="fc")], onPage=cover_bg),
                       PageTemplate(id="p", frames=[Frame(doc.leftMargin, doc.bottomMargin, doc.width, doc.height, id="f")], onPage=deco)])
-en = section("en"); fr = section("fr")
-en[-1:] = [NextPageTemplate("cover"), PageBreak()]
-doc.build(en + fr[:-1])
+fr = section("fr")              # notice en francais uniquement (couverture noire FRANCAIS)
+doc.build(fr[:-1])
 print(OUT)

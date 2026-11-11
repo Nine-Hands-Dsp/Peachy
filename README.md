@@ -2,7 +2,7 @@
 
 Préampli saturé + fuzz au **format pédale double**, d'après une pédale « préampli + fuzz » au son des sessions
 metal du milieu des années 90 (7 cordes accordées bas). Disposition des commandes reprise de la pédale d'origine,
-habillage d'après le visuel de l'utilisateur (`design/source/peachy_visuel_v3.png` : cadre noir peint, bande noire rayée de rouge en haut, rouge en dégradé, inscriptions manuscrites), logo NINE HANDS | DSP noir en bas. Usage personnel. Windows 11 et macOS
+habillage v2 d'après le pack de design v7 de l'utilisateur (`design/v7/` : façade peinte rouge et noire, inscriptions manuscrites, silhouette, nom « Peachy », écran de presets, logo NINE HANDS | DSP rouge). Usage personnel. Windows 11 et macOS
 (binaire universel).
 
 <p align="center">
@@ -56,22 +56,17 @@ Interprétation des potards du haut (non documentée par le fabricant) : MASTER 
 - Processeur : ~10 à 15 % d'un cœur avec une capture, ~20 à 30 % entre deux positions de capture.
 - v1.4.0 : OCTAVE = preset Octave doubler (−12) de Semitones (même moteur, même mélange), placé devant fuzz et préampli. v1.3.7 : saturation de l'octave plus agressive (drive x2, passe-bas 4,5 kHz). v1.3.6 : octave saturée seule (part propre retirée). v1.3.5 : octave = mélange propre + saturée en parallèle. v1.3.4 : octave encore +2 dB. v1.3.3 : octave +2 dB. v1.3.2 : octave en renfort ajouté au son en place, sans écart de niveau ; plus de coupures (plancher de bruit plafonné à −54 dBFS). v1.3.1 : ombres sous VOLUME refaites (traces retirées, ombre d'origine du potard reposée). v1.3.0 : OCTAVE = générateur d'octaves polyphonique (son Baritone Growl de FOG Z, reconstruit d'après sa notice : ~190 filtres complexes à 12 kHz, pics du spectre seuls, phase divisée par 2 et 4, porte par bande, suiveur d'arrêt, porte de repos), actif sans le fuzz ; potard VOLUME rapproché de DISTORTION (triangle avec TONE). v1.2.4 : OCTAVE une octave plus bas (deux octaves sous la note). v1.2.3 : plus de décrochage de l'octave (note gardée tant qu'il y a du signal, changement de note confirmé, power chords reconnus, détection plus sélective). v1.2.2 : octave stable en accordage très bas (suivi de hauteur), niveau d'origine. v1.2.1 : fuzz muet sous Windows corrigé (les architectures NAM sont désormais enregistrées explicitement : l'éditeur de liens les écartait de la bibliothèque statique du plugin). v1.2.0 : correctif du fuzz muet sous Windows (compilation AVX2 retirée : alignement mémoire des réseaux NAM non garanti par Windows) ; garde-fou : un réseau qui sortirait une valeur non finie est écarté puis réinitialisé hors du thread audio ; la barre de presets signale « fuzz captures not loaded » si les captures ne se chargent pas.
 
-## Interface
+## Interface (v2.0.0, pack design v7)
 
-- Fenêtre ouverte à **661 × 495** (taille de Ring Think), impossible de la réduire en dessous, proportions bloquées.
-  Clic droit > *Plugin size* : 60 % / 75 % / 100 % (taille actuelle cochée, « (default) » à côté de la taille par défaut) ;
-  *Plugin size > Default size (new windows)* : taille d'ouverture des nouvelles fenêtres, mémorisée pour toutes les instances (comme Octopus) et appliquée tout de suite.
-- **Barre de presets** : flèches = précédent / suivant, clic sur le nom = menu (10 presets d'usine, presets utilisateur 1 à 9).
-- **Ligne d'état** : réglage de la commande que l'on bouge (potards en %), dans la police manuscrite des inscriptions de la pédale (Shadows Into Light).
-- Potards : seul le repère blanc peint tourne, les reflets du biseau chromé restent fixes (lumière en haut à gauche).
-- Footswitchs **noirs** (écrou hexagonal anodisé, bague moletée, bouton tourné, rendus en 3D avec la lumière du visuel) : bascule dès l'appui, **bouton enfoncé tant qu'on appuie** (il descend, s'assombrit, son ombre portée se raccourcit). LED **blanches** (bague chromée, lentille en dôme) en fondu, halo blanc et façade éclairée autour.
-- Inverseur OCTAVE (aligné sur le potard TONE) : exactement celui de FreakOut (photo du kit NINE HANDS | DSP : bague nickel + levier, haut = on), détouré, ombre douce sur le rouge, image intermédiaire pendant la bascule, molette possible.
-- Pédale agrandie de 8 % dans la même fenêtre (v1.2.0).
-- Jacks du kit NINE HANDS | DSP **en haut du boîtier** comme sur l'original (OUT à gauche, IN à droite), réduits.
-- **Anti-gel v2** : rendu logiciel forcé sous Windows, fenêtre opaque, timer 30 Hz qui ne redessine que ce qui change,
-  caches d'images reconstruits par le timer seulement, chien de garde de redessin (1,5 s), jamais de `setSize` dans
-  `resized()` ; côté audio, aucun appel à l'hôte ni allocation (MIDI en file vidée sur le thread de messages,
-  paramètres lus par pointeurs mis en cache). JUCE 8.0.15.
+- Fond `background.png` 2350 × 1800 du pack (ombres des potards, de l'inverseur et des LED cuites, lumière en haut à gauche à 45°), repère 1175 × 900 unités. Inscriptions des jacks du haut échangées par rapport au pack : **OUT à gauche, IN à droite**.
+- Fenêtre ouverte à « 60 % » (hauteur de Ring Think, 495), impossible de la réduire en dessous, proportions bloquées. Clic droit > *Plugin size* : 60 % (default) / 75 % / 100 % + *Default size (new windows)*.
+- **Potards** (`NHKnob.h`, calques 800 px du pack, exposition ×0,80) : couronne et index tournent ensemble avec **flou de mouvement** ; reflet du monde (alpha multiplié par celui de la couronne tournée) et centre brossé fixes.
+- **Inverseur OCTAVE** : photos du kit NINE HANDS | DSP (haut / milieu / bas superposés, `tools/v7/toggle_kit.py`), image du milieu ~55 ms pendant la bascule ; moitié haute = ON, moitié basse = OFF, molette.
+- **LED rouges** du pack : état éteint rendu à partir de la même lentille, allumage / extinction en fondu, halo = lumière reçue par la façade (calque alpha) dosé par **Glow** (clic droit, 25 / 50 / 75 / 100 %, commun à toutes les fenêtres).
+- **Footswitchs** hexagonaux du pack : bascule à l'appui, bouton enfoncé tant qu'on appuie (plus petit, plus sombre, gorge ombrée), momentané si maintenu (réglable).
+- **Écran** du pack : preset en cours (Inter Medium) ; la ligne d'état prend sa place pendant un réglage (fondu croisé) puis disparaît 2,5 s après.
+- Menus clic droit au design d'Octopus (`NineHandsMenu.h`, Poppins), ouverts là où l'on clique, MIDI Learn sur chaque commande.
+- **Anti-gel v2** : rendu logiciel forcé sous Windows, fenêtre opaque, caches reconstruits par le timer, chien de garde de redessin ; côté audio aucun appel à l'hôte. JUCE 8.0.15.
 
 ## MIDI
 
@@ -94,13 +89,13 @@ toutes les assignations. Les assignations sont sauvegardées avec le projet.
 
 ## Fichiers
 
-- `PeachyDSP.*` moteur audio · `PluginProcessor.*` / `PluginEditor.*` plugin · `Layout.h` repères (généré)
-- `tools/make_background.py` prépare le fond à partir du visuel de l'utilisateur (repères, LED, footswitchs, inverseur effacés puis rendus en 3D : `fs_up.png` / `fs_down.png`, `led_on.png`, calques des LED, `Layout.h`) ; `tools/art3d.py` rendu 3D ; `tools/make_art.py` = visuel synthétique de la v1.0 · `tools/render` captures
-  de la vraie fenêtre sous Linux · `tests/test_dsp.cpp` banc d'essai audio
-- `models/` captures NAM du fuzz (TONE 5) intégrées au plugin · `third_party/` NeuralAmpModelerCore (MIT), nlohmann/json (MIT)
-- Police : Shadows Into Light (OFL) pour les inscriptions et la ligne d'état ; Poppins pour la notice
+- `PeachyDSP.*` moteur audio · `PluginProcessor.*` / `PluginEditor.*` plugin · `NHKnob.h` potards · `Layout.h` / `tools/layout.json` repères (générés)
+- `design/v7/` pack de design (règles, layout, calques, sources) · `tools/v7/make_v2_art.py` prépare toutes les images du plugin · `tools/v7/compose.py` aperçu · `tools/render` captures de la vraie fenêtre sous Linux · `tools/manual.py` notice
+- `models/` captures NAM du fuzz (TONE 5) · `third_party/` NeuralAmpModelerCore (MIT), nlohmann/json (MIT)
+- Polices : Inter Medium (OFL) pour l'écran, Poppins (OFL) pour les menus et la notice, Barlow Condensed (OFL) pour la couverture de la notice
 
 - v1.4.1 : menu de taille de fenêtre : « 60 % (default) », 75 %, 100 % (plus de taille en pixels)
 - v1.5.0 : MIDI Learn au clic droit sur chaque commande (Clear MIDI, assignations sauvegardées avec le projet)
 - v1.6.0 : clic droit > Plugin size > Default size (new windows) : taille par défaut des nouvelles fenêtres au choix, comme dans Octopus
 - v1.6.1 : plus aucun CC MIDI assigné par défaut (tout passe par le MIDI Learn)
+- v2.0.0 : refonte complète d'après le pack de design v7 (fond 2350 × 1800, potards animés avec flou de mouvement, inverseur du kit photo, LED rouges éteinte / allumée + Glow, footswitchs du pack enfoncés à l'appui, écran presets / ligne d'état en Inter, menus Octopus) ; notice en français uniquement

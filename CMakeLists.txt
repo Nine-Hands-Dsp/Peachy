@@ -6,7 +6,7 @@ if(APPLE)
   set(CMAKE_OSX_DEPLOYMENT_TARGET "10.15" CACHE STRING "" FORCE)
 endif()
 
-project(Peachy VERSION 1.6.2)
+project(Peachy VERSION 2.0.0)
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -40,7 +40,9 @@ endif()
 
 # visuel, police et captures NAM integres au plugin (aucun fichier externe a l'execution)
 juce_add_binary_data(PeachyAssets SOURCES
-  background.jpg toggle_strip.png glow_l.png glow_r.png led_on.png fs_up.png fs_down.png assets/fonts/ShadowsIntoLight.ttf
+  background.png toggle_strip.png led_on.png led_off.png glow_led_l.png glow_led_r.png fs_down_l.png fs_down_r.png
+  knob_crown.png knob_reflect.png knob_center.png knob_indicator.png
+  assets/fonts/Inter-Medium.otf assets/fonts/Poppins-Regular.ttf assets/fonts/Poppins-Medium.ttf assets/fonts/Poppins-Bold.ttf
   models/fuzz_G50.nam models/fuzz_G65.nam models/fuzz_G75.nam models/fuzz_G90.nam models/fuzz_G100.nam)
 set_target_properties(PeachyAssets PROPERTIES POSITION_INDEPENDENT_CODE TRUE)
 
@@ -52,7 +54,7 @@ juce_add_plugin(Peachy
   FORMATS VST3
   VST3_CATEGORIES Fx Distortion
   PRODUCT_NAME "Peachy"
-  VERSION 1.6.2
+  VERSION 2.0.0
   DESCRIPTION "Preamp + fuzz (NAM captures) - double pedal format"
   IS_SYNTH FALSE
   NEEDS_MIDI_INPUT TRUE

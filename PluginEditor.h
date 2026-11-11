@@ -1,73 +1,53 @@
 #pragma once
-
-#include "PluginProcessor.h"
 #include <juce_gui_basics/juce_gui_basics.h>
+#include "PluginProcessor.h"
+#include "NHKnob.h"
+#include "NineHandsMenu.h"
 
 //==============================================================================
-// Potards : chapeau noir et biseau chrome dans le fond (reflets fixes) ; seul le repere blanc peint tourne.
+// Peachy v2 (NINE HANDS | DSP) : pack design v7. Fond 2350 x 1800 (ombres cuites), repere 1175 x 900 unites.
 //==============================================================================
-class PeachyKnobLookAndFeel : public juce::LookAndFeel_V4
-{
-public:
-    void drawRotarySlider (juce::Graphics&, int x, int y, int w, int h,
-                           float pos, float startAngle, float endAngle, juce::Slider&) override;
-};
 
-class PeachyKnob : public juce::Slider
-{
-public:
-    float topRatio = 0.83f;              // rayon du disque noir du dessus / rayon du potard
-    bool hitTest (int x, int y) override;
-};
-
-//==============================================================================
-// Inverseur OCTAVE (levier nickel du kit NINE HANDS | DSP) : 3 images (haut = ON, intermediaire ~55 ms, bas = OFF)
-//==============================================================================
+// inverseur OCTAVE : kit photo (haut / milieu / bas), image du milieu ~55 ms pendant la bascule
 class LeverSwitch : public juce::Component
 {
 public:
-    explicit LeverSwitch (juce::RangedAudioParameter& p);
+    explicit LeverSwitch (juce::RangedAudioParameter&);
     void paint (juce::Graphics&) override;
     void mouseDown (const juce::MouseEvent&) override;
     void mouseWheelMove (const juce::MouseEvent&, const juce::MouseWheelDetails&) override;
+    bool hitTest (int x, int y) override;
     void tick (double nowMs);
     juce::Image strip;
-    std::function<void()> onRightClick, onUserChange;
+    std::function<void (const juce::MouseEvent&)> onRightClick;
+    std::function<void()> onUserChange;
 private:
     juce::ParameterAttachment attachment;
     bool on = false;
-    int shownFrame = 2, targetFrame = 2;
+    int shownFrame = 0, targetFrame = 0;
     double transitionUntil = 0.0;
 };
 
-//==============================================================================
-// Footswitch (reference Echoflex) : bascule a l'appui, bouton assombri tant qu'on appuie,
-// appui maintenu (> 0,45 s) quand la section etait coupee = fonctionnement momentane.
-//==============================================================================
+// footswitch du pack (cuit dans le fond) : zone d'appui circulaire, bascule a l'appui, bouton enfonce tant qu'on appuie
 class FootSwitchArea : public juce::Component
 {
 public:
-    FootSwitchArea (juce::RangedAudioParameter& p, std::atomic<float>* holdMomentary);
+    FootSwitchArea (juce::RangedAudioParameter&, std::atomic<float>* holdMomentary);
     void paint (juce::Graphics&) override;
     void mouseDown (const juce::MouseEvent&) override;
     void mouseUp (const juce::MouseEvent&) override;
     bool hitTest (int x, int y) override;
-    std::function<void()> onRightClick, onUserChange;
-    juce::Image imgUp, imgDown;            // footswitch noir : repos / enfonce
+    juce::Image imgDown;
+    float hitRadiusRatio = 0.97f;               // rayon cliquable / demi-cote du composant
+    std::function<void (const juce::MouseEvent&)> onRightClick;
+    std::function<void()> onUserChange;
 private:
+    std::atomic<float>* hold;
+    juce::ParameterAttachment attachment;
     bool value = false, pressed = false, turnedOnByPress = false;
     double downTime = 0.0;
-    std::atomic<float>* hold = nullptr;
-    juce::ParameterAttachment attachment;
 };
 
-struct RightClickForwarder : public juce::MouseListener
-{
-    std::function<void (juce::Component*)> callback;    // composant clique (potard) : menu MIDI Learn de cette commande
-    void mouseDown (const juce::MouseEvent& e) override { if (e.mods.isPopupMenu() && callback) callback (e.eventComponent); }
-};
-
-//==============================================================================
 class PeachyAudioProcessorEditor : public juce::AudioProcessorEditor,
                                    private juce::Timer
 {
@@ -78,69 +58,66 @@ public:
     void paint (juce::Graphics&) override;
     void resized() override;
     void parentHierarchyChanged() override;
+    void visibilityChanged() override;
     void mouseDown (const juce::MouseEvent&) override;
     void mouseMove (const juce::MouseEvent&) override;
     void mouseExit (const juce::MouseEvent&) override;
 
-    // repere de reference (fond 2x = 2480 x 1856) ; tailles de fenetre comme Ring Think (format double)
-    static constexpr int baseW = 1240, baseH = 928;
-    static constexpr int defaultH = 495;             // 661 x 495 : ouverture par defaut = taille minimale
-    static constexpr int refH = 743;                 // « 100 % » = 993 x 743 (comme Ring Think)
-    static constexpr int maxH = 1123;
-
-    void setScaledHeight (int h);
-    static constexpr int numSizes = 3;          // 60 % (defaut d'origine) / 75 % / 100 %
+    // taille : defaut « 60 % » (hauteur de Ring Think), 75 %, 100 % ; jamais plus petit que le defaut
+    static constexpr float baseW = 1175.0f, baseH = 900.0f;
+    static constexpr float defaultH = 495.0f, refH = 743.0f, maxH = 1114.0f;
+    static constexpr int numSizes = 3;
     static int sizeHeight (int idx);
-    void showStatus();
+    void setScaledHeight (int h);
+    void setGlowPercent (int pc);
+    void showMenuForTest (int learnIdx, juce::PopupMenu& out) { buildContextMenu (out, learnIdx); }   // tools/render
+    void buildPresetMenu (juce::PopupMenu&);
+    NineHandsMenu::MenuLnf menuLnf;
+    float glow = 1.0f;
 
 private:
     void timerCallback() override;
     void useSoftwareRenderer();
-    void visibilityChanged() override;
     void askRepaint (juce::Rectangle<int> r);
-    void showContextMenu (int learnIdx = -1);     // learnIdx >= 0 : clic droit sur une commande (MIDI Learn en tete du menu)
-    void addMidiMenu (juce::PopupMenu& menu, int learnIdx);
-    void handleMidiMenu (int r);
-    void showPresetMenu();
-    void stepPreset (int delta);
     void rebuildCaches (float scale = 0.0f);
     float physicalScale() const;
     juce::Rectangle<int> scaled (juce::Rectangle<float> r) const;
+    void showContextMenu (const juce::MouseEvent* e, int learnIdx = -1);
+    void buildContextMenu (juce::PopupMenu& menu, int learnIdx);
+    void handleMenu (int r);
+    void showPresetMenu();
+    void stepPreset (int delta);
+    void flash (const juce::String& s);
     juce::String buildStatusLine() const;
     juce::String buildPresetLine() const;
-    void drawLed (juce::Graphics&, int which);
-    void drawStatus (juce::Graphics&);
-    void drawPresetBar (juce::Graphics&);
+    void drawLeds (juce::Graphics&);
+    void drawDisplay (juce::Graphics&);
+    int presetZoneAt (juce::Point<float> p) const;
 
     PeachyAudioProcessor& proc;
-    PeachyKnobLookAndFeel lnf;
-    RightClickForwarder rightClickFwd;
-
-    juce::Image background, bgScaled, glow[2], glowS[2], ledOn;
-    int cacheW = 0, cacheH = 0;
-    float cacheScale = 0.0f;
-    int resizeSettle = 0;
-    void* lastPeer = nullptr;
-    double lastPaintMs = 0.0, repaintAskedMs = 0.0, lastScaleCheckMs = 0.0, lastRendererCheckMs = 0.0;
-    juce::Typeface::Ptr labelFace;
-
-    PeachyKnob knobs[PeachyAudioProcessor::numKnobs];
-    std::unique_ptr<juce::AudioProcessorValueTreeState::SliderAttachment> knobAtt[PeachyAudioProcessor::numKnobs];
+    std::unique_ptr<nh::Knob> knobs[PeachyAudioProcessor::numKnobs];
     LeverSwitch octSwitch;
     FootSwitchArea preFs, fuzzFs;
 
-    float ledLevel[2] { 0.0f, 0.0f }, drawnLed[2] { -1.0f, -1.0f };
-    int lastChanged = -1;
-    float statusAlpha = 0.0f, drawnStatus = -1.0f;
-    double statusUntil = 0.0;
-    juce::String lastLine1, lastPreset;
-    float lastValues[16];
-    int lastPresetCounter = 0, lastMidiCount = 0, midiFlash = 0;
-    int hoverZone = 0, drawnHover = -1;
+    juce::Image background, bgScaled, ledOn, ledOff, glowImg[2];
+    juce::Typeface::Ptr interFace, regularFace, mediumFace, boldFace;
+    const juce::Colour menuAccent { 0xffe0251c };
 
-    // MIDI Learn : message dans la ligne d'etat (attente, puis « <Commande> = CC n » 2 s)
-    juce::String learnLine;
-    double learnLineUntil = 0.0;
+    // anti-gel v2
+    void* lastPeer = nullptr;
+    double lastRendererCheckMs = 0.0, lastScaleCheckMs = 0.0, repaintAskedMs = 0.0, lastPaintMs = 0.0, lastGlowCheckMs = 0.0;
+    int resizeSettle = 0, cacheW = 0, cacheH = 0;
+    float cacheScale = 0.0f;
+
+    // ecran : barre de presets et ligne d'etat au meme endroit
+    static constexpr int numValueIds = 13;
+    float lastValues[numValueIds] {};
+    int lastChanged = -1, lastPresetCounter = 0, lastMidiCount = 0, hoverZone = 0, drawnHover = -1, midiFlash = 0;
+    double statusUntil = 0.0, learnLineUntil = 0.0, flashUntil = 0.0;
+    float statusAlpha = 0.0f, drawnStatus = -1.0f;
+    juce::String learnLine, flashLine, lineStatus, linePreset;
+
+    float ledLevel[2] {}, drawnLed[2] { -1.0f, -1.0f };
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (PeachyAudioProcessorEditor)
 };

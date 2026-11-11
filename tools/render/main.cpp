@@ -58,6 +58,7 @@ int main (int argc, char** argv)
     shot ("peachy_default", 0, true,  false, false, PeachyAudioProcessorEditor::defaultH);
     shot ("peachy_both",    7, true,  true,  false, PeachyAudioProcessorEditor::refH);
     shot ("peachy_status",  4, false, true,  true,  PeachyAudioProcessorEditor::refH);
+    shot ("peachy_100",     7, true,  true,  false, PeachyAudioProcessorEditor::refH);
     shot ("peachy_off",     0, false, false, false, PeachyAudioProcessorEditor::refH);
     {
         auto sendCC = [&] (int v)
@@ -70,6 +71,60 @@ int main (int argc, char** argv)
         };
         const float a = sendCC (2), c = sendCC (116), mid = sendCC (59);
         std::printf ("pedale 2..116 -> distortion %.2f / %.2f, mi-course %.2f\n", a, c, mid);
+    }
+    // reglage Glow 25 / 50 / 75 / 100 % (les deux LED allumees)
+    for (int pc : { 25, 50, 75, 100 })
+    {
+        ped->setGlowPercent (pc);
+        shot ("peachy_glow_" + String (pc), 7, true, true, false, PeachyAudioProcessorEditor::refH);
+    }
+    // menus clic droit (design Octopus) : rendu hors ecran avec le meme LookAndFeel que le plugin
+    auto renderMenu = [&] (const String& name, PopupMenu& menu, int hi)
+    {
+        auto& lnf = ped->menuLnf;
+        const int border = lnf.getPopupMenuBorderSize();
+        struct It { String text; bool sep, active, ticked, sub; PopupMenu::CustomComponent* cc; };
+        std::vector<It> items;
+        for (PopupMenu::MenuItemIterator it (menu); it.next();)
+        {
+            auto& i = it.getItem();
+            items.push_back ({ i.text, i.isSeparator, i.isEnabled, i.isTicked, i.subMenu != nullptr, i.customComponent.get() });
+        }
+        int maxW = 260, totalH = border * 2;
+        std::vector<int> hs;
+        for (auto& it : items)
+        {
+            int iw = 0, ih = 0;
+            if (it.cc != nullptr) it.cc->getIdealSize (iw, ih);
+            else lnf.getIdealPopupMenuItemSize (it.text, it.sep, 0, iw, ih);
+            hs.push_back (ih); totalH += ih; maxW = jmax (maxW, iw + (it.sub ? 24 : 0) + border * 2);
+        }
+        Image img (Image::ARGB, maxW * 2, totalH * 2, true);
+        Graphics g (img); g.addTransform (AffineTransform::scale (2.0f));
+        lnf.drawPopupMenuBackground (g, maxW, totalH);
+        int y = border;
+        for (size_t i = 0; i < items.size(); ++i)
+        {
+            auto& it = items[i];
+            if (it.cc != nullptr)
+            {
+                it.cc->setSize (maxW - border * 2, hs[i]);
+                Graphics::ScopedSaveState ss (g); g.setOrigin (border, y); it.cc->paint (g);
+            }
+            else lnf.drawPopupMenuItem (g, { border, y, maxW - border * 2, hs[i] }, it.sep, it.active, (int) i == hi, it.ticked, it.sub, it.text, {}, nullptr, nullptr);
+            y += hs[i];
+        }
+        File f (out + "/" + name + ".png"); f.deleteFile(); FileOutputStream os (f); PNGImageFormat().writeImageToStream (img, os);
+        std::printf ("%s\n", f.getFullPathName().toRawUTF8());
+    };
+    { PopupMenu m; ped->showMenuForTest (-1, m); renderMenu ("menu_main", m, 4); }
+    { PopupMenu m; ped->showMenuForTest (1, m);  renderMenu ("menu_knob", m, 2); }
+    { PopupMenu m; ped->buildPresetMenu (m);     renderMenu ("menu_presets", m, 10); }
+    {
+        PopupMenu m; m.setLookAndFeel (&ped->menuLnf);
+        NineHandsMenu::addHeader (m, ped->menuLnf.f, NineHandsMenu::icoGlow, Colour (0xffe0251c), "Glow", "Halo of the lights");
+        for (int pc : { 25, 50, 75, 100 }) m.addItem (60 + pc, "Glow " + String (pc) + " %" + (pc == 100 ? "  (default)" : ""), true, pc == 100);
+        renderMenu ("menu_glow", m, 3);
     }
     ed.reset();
     return 0;

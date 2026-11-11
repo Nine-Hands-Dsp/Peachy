@@ -1,0 +1,311 @@
+{
+  "canvas": {
+    "width": 2350,
+    "height": 1800,
+    "note": "all coordinates are pixels in the 2350x1800 design, origin top-left, y down"
+  },
+  "light": {
+    "direction": "top-left, azimuth 45 deg, elevation 45 deg",
+    "shadows_fall": "down-right"
+  },
+  "backgrounds": {
+    "widgets_free": "background/pedal_background_widgets_free.png  (static shadows of knobs / octave switch / LEDs baked in; NO knobs, switch, LEDs, display text)",
+    "complete_no_knobs": "background/pedal_background_complete_no_knobs.png  (LEDs + display text baked, no knobs, no octave switch - the v7 'sans potards' render)",
+    "reference_complete": "background/pedal_reference_complete.png  (full v7 render, for visual comparison only)"
+  },
+  "knobs": {
+    "filmstrip": {
+      "frames": 128,
+      "min_deg": -135,
+      "max_deg": 135,
+      "orientation": "vertical strip, frame i = round(value*(N-1)), clockwise-positive, 0 deg = 12 o'clock",
+      "design_pointer_angle_deg": 33,
+      "exposure_baked": 0.8
+    },
+    "items": [
+      {
+        "id": "master",
+        "center": [
+          468.0,
+          343.5
+        ],
+        "body_diameter": 264,
+        "sprite": "sprites/knob_big_filmstrip_128.png",
+        "frame_size": 271,
+        "x": 332,
+        "y": 208
+      },
+      {
+        "id": "gain",
+        "center": [
+          933.0,
+          343.5
+        ],
+        "body_diameter": 264,
+        "sprite": "sprites/knob_big_filmstrip_128.png",
+        "frame_size": 271,
+        "x": 798,
+        "y": 208
+      },
+      {
+        "id": "volume",
+        "center": [
+          1399.0,
+          343.5
+        ],
+        "body_diameter": 264,
+        "sprite": "sprites/knob_big_filmstrip_128.png",
+        "frame_size": 271,
+        "x": 1264,
+        "y": 208
+      },
+      {
+        "id": "distortion",
+        "center": [
+          1978.0,
+          343.5
+        ],
+        "body_diameter": 264,
+        "sprite": "sprites/knob_big_filmstrip_128.png",
+        "frame_size": 271,
+        "x": 1842,
+        "y": 208
+      },
+      {
+        "id": "bass",
+        "center": [
+          241.0,
+          763.0
+        ],
+        "body_diameter": 264,
+        "sprite": "sprites/knob_big_filmstrip_128.png",
+        "frame_size": 271,
+        "x": 106,
+        "y": 628
+      },
+      {
+        "id": "mid",
+        "center": [
+          706.0,
+          763.0
+        ],
+        "body_diameter": 264,
+        "sprite": "sprites/knob_big_filmstrip_128.png",
+        "frame_size": 271,
+        "x": 570,
+        "y": 628
+      },
+      {
+        "id": "treble",
+        "center": [
+          1172.0,
+          763.0
+        ],
+        "body_diameter": 264,
+        "sprite": "sprites/knob_big_filmstrip_128.png",
+        "frame_size": 271,
+        "x": 1036,
+        "y": 628
+      },
+      {
+        "id": "tone",
+        "center": [
+          1750.5,
+          763.0
+        ],
+        "body_diameter": 264,
+        "sprite": "sprites/knob_big_filmstrip_128.png",
+        "frame_size": 271,
+        "x": 1615,
+        "y": 628
+      },
+      {
+        "id": "presence",
+        "center": [
+          942.5,
+          1094.5
+        ],
+        "body_diameter": 144,
+        "sprite": "sprites/knob_presence_filmstrip_128.png",
+        "frame_size": 148,
+        "x": 868,
+        "y": 1020
+      }
+    ]
+  },
+  "octave_switch": {
+    "id": "octave",
+    "washer_center": [
+      2042.5,
+      765.0
+    ],
+    "washer_radius": 41.5,
+    "states": {
+      "ON": {
+        "file": "sprites/toggle_ON.png",
+        "x": 2001,
+        "y": 696,
+        "w": 84,
+        "h": 111
+      },
+      "OFF": {
+        "file": "sprites/toggle_OFF.png",
+        "x": 2001,
+        "y": 723,
+        "w": 84,
+        "h": 102
+      }
+    },
+    "shadow": "baked in widgets_free (cast shadow comes from the washer only: the lever that sticks out casts none)",
+    "default_in_design": "ON"
+  },
+  "leds": [
+    {
+      "id": "led_left",
+      "center": [
+        518.5,
+        1094.5
+      ],
+      "size": 65,
+      "x": 486,
+      "y": 1062,
+      "sprite": "sprites/led_lit_65.png",
+      "note": "only the LIT state exists; no halo / glow on purpose; vertically aligned with the presence knob centre (y=1094.5)"
+    },
+    {
+      "id": "led_right",
+      "center": [
+        1827.0,
+        1094.5
+      ],
+      "size": 65,
+      "x": 1794,
+      "y": 1062,
+      "sprite": "sprites/led_lit_65.png"
+    }
+  ],
+  "footswitches": [
+    {
+      "id": "footswitch_left",
+      "center": [
+        400.0,
+        1522.5
+      ],
+      "hex_size": [
+        322,
+        279
+      ],
+      "hit_rect": [
+        239,
+        1383,
+        322,
+        279
+      ],
+      "note": "baked in the background (no pressed state provided)"
+    },
+    {
+      "id": "footswitch_right",
+      "center": [
+        1951.0,
+        1522.5
+      ],
+      "hex_size": [
+        322,
+        279
+      ],
+      "hit_rect": [
+        1790,
+        1383,
+        322,
+        279
+      ]
+    }
+  ],
+  "display": {
+    "rect": [
+      778,
+      1478,
+      792,
+      97
+    ],
+    "corner_radius": 48.5,
+    "center": [
+      1174.0,
+      1526.5
+    ],
+    "recess": "outer housing lip 2.6 px (bottom/ends lit) + 3.25 px black gap + darker screen (inset ~5.9 px) with its own edge highlight - all baked",
+    "text": {
+      "font": "fonts/Inter-Medium.otf",
+      "size_px": 50,
+      "color_rgb": [
+        251,
+        251,
+        251
+      ],
+      "align": "ink box centred horizontally on x=1174; cap-height band centred vertically on y=1526.5",
+      "example": "P8  Wall of Sludge"
+    },
+    "arrows": {
+      "left_center": [
+        830.0,
+        1526.5
+      ],
+      "right_center": [
+        1518.0,
+        1526.5
+      ],
+      "size_px": 17,
+      "color_rgb": [
+        251,
+        251,
+        251
+      ],
+      "note": "baked in both backgrounds"
+    }
+  },
+  "jacks": {
+    "left": {
+      "x": 450,
+      "y": 0,
+      "w": 170,
+      "h": 22,
+      "label": "in"
+    },
+    "right": {
+      "x": 1739,
+      "y": 0,
+      "w": 170,
+      "h": 22,
+      "label": "out"
+    },
+    "note": "baked"
+  },
+  "labels": {
+    "font": "KORN.TTF (supplied by the designer, lower-case glyphs, 'r' is mirrored by design)",
+    "note": "baked in the backgrounds; list given for parameter mapping only",
+    "items": [
+      "master",
+      "gain",
+      "volume",
+      "distortion",
+      "bass",
+      "mid",
+      "treble",
+      "tone",
+      "octave",
+      "presence",
+      "in",
+      "out"
+    ]
+  },
+  "logo": {
+    "text": "NINE HANDS | DSP",
+    "bbox": [
+      975,
+      1686,
+      400,
+      36
+    ],
+    "note": "baked, red on black"
+  }
+}
