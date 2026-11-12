@@ -98,4 +98,5 @@ toutes les assignations. Les assignations sont sauvegardées avec le projet.
 - v1.5.0 : MIDI Learn au clic droit sur chaque commande (Clear MIDI, assignations sauvegardées avec le projet)
 - v1.6.0 : clic droit > Plugin size > Default size (new windows) : taille par défaut des nouvelles fenêtres au choix, comme dans Octopus
 - v1.6.1 : plus aucun CC MIDI assigné par défaut (tout passe par le MIDI Learn)
+- v2.0.1 : halo des LED corrigé (plus de carré lumineux autour des LED : la lumière retombe en cercle doux sur la façade)
 - v2.0.0 : refonte complète d'après le pack de design v7 (fond 2350 × 1800, potards animés avec flou de mouvement, inverseur du kit photo, LED rouges éteinte / allumée + Glow, footswitchs du pack enfoncés à l'appui, écran presets / ligne d'état en Inter, menus Octopus) ; notice en français uniquement

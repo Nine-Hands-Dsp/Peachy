@@ -49,14 +49,14 @@ offA = np.dstack([np.clip(off, 0, 255), led[..., 3]]); save(offA, 'led_off.png')
 col = np.array([1.0, 0.16, 0.08])
 glow_rects = []
 for i, l in enumerate(L['leds']):
-    cx, cy = l['center']; R = 190
+    cx, cy = l['center']; R = 240
     x0, ya = int(cx - R), int(cy - R)
     crop = bg[ya:ya + 2 * R, x0:x0 + 2 * R, :3]
     yy, xx = np.mgrid[0:2 * R, 0:2 * R].astype(np.float32)
     d = np.hypot(xx + x0 - cx, yy + ya - cy)
     h = 30.0                                                     # hauteur de la source au-dessus de la facade (px)
     E = 2.6 * (h / np.sqrt(d ** 2 + h ** 2)) ** 3 + 0.25 * np.exp(-d / 95.0)      # cos / d^2 + diffusion large
-    E *= np.clip((2 * R - 10 - d) / 40.0, 0, 1)
+    fo = np.clip((R - 8 - d) / 110.0, 0, 1); E *= fo * fo * (3 - 2 * fo)          # retombe a zero bien avant le bord : aucun carre visible
     E[d < 30] *= np.clip((d[d < 30] - 24) / 6.0, 0, 1)            # sous la lentille : rien (la LED est dessinee par-dessus)
     T = np.clip(crop * (1 + E[..., None] * col * 2.2) + (E[..., None] ** 2) * col * 18, 0, 255)
     optical = 70 * np.exp(-((d - 33) / 7.0) ** 2) * (d > 30)     # tres faible halo optique autour de la lentille

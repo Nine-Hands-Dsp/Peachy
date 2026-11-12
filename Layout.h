@@ -12,9 +12,9 @@ namespace layout
     const juce::Point<float> togglePos { 1021.25f, 382.50f };
     constexpr float toggleS = 84.00f;
     const juce::Rectangle<float> ledL { 243.00f, 531.00f, 32.50f, 32.50f };
-    const juce::Rectangle<float> glowL { 164.00f, 452.00f, 190.00f, 190.00f };
+    const juce::Rectangle<float> glowL { 139.00f, 427.00f, 240.00f, 240.00f };
     const juce::Rectangle<float> ledR { 897.00f, 531.00f, 32.50f, 32.50f };
-    const juce::Rectangle<float> glowR { 818.50f, 452.00f, 190.00f, 190.00f };
+    const juce::Rectangle<float> glowR { 793.50f, 427.00f, 240.00f, 240.00f };
     const juce::Point<float> fsL { 200.00f, 761.25f };
     const juce::Rectangle<float> fsDownL { 144.00f, 705.00f, 112.00f, 112.00f };
     const juce::Point<float> fsR { 975.50f, 761.25f };
