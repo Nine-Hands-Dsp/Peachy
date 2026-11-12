@@ -385,6 +385,7 @@ void PeachyAudioProcessor::getStateInformation (MemoryBlock& dest)
 {
     auto state = apvts.copyState();
     state.setProperty ("currentPreset", currentPreset.load(), nullptr);
+    state.setProperty ("uiSize", uiSizeIdx.load(), nullptr);
     for (int i = 0; i < numLearn; ++i)
         state.setProperty (String ("cc_") + learnDef (i).id, ccMap[i].load(), nullptr);
     if (auto xml = state.createXml()) copyXmlToBinary (*xml, dest);
@@ -397,6 +398,7 @@ void PeachyAudioProcessor::setStateInformation (const void* data, int size)
         {
             auto state = ValueTree::fromXml (*xml);
             currentPreset = (int) state.getProperty ("currentPreset", 0);
+            uiSizeIdx = jlimit (-1, 2, (int) state.getProperty ("uiSize", -1));
             // assignations MIDI Learn ; ancien projet (sans ces proprietes, ou avec la table d'usine CC 20-31
             // jamais modifiee) : considere comme jamais assigne, tout est vide
             bool untouchedFactory = true;

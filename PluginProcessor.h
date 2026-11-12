@@ -76,6 +76,7 @@ public:
     static juce::StringArray gateNames() { return { "Off", "Light", "Medium", "Strong" }; }
 
     // informations pour la fenetre
+    std::atomic<int> uiSizeIdx { -1 };   // taille de fenetre choisie au menu pour ce projet (-1 = taille par defaut)
     std::atomic<int>   currentPreset { 0 }, presetCounter { 0 };
     std::atomic<int>   lastMidiCC { -1 }, lastMidiValue { 0 }, lastMidiProgram { -1 }, midiCounter { 0 };
     std::atomic<float> outLevel { 0.0f };

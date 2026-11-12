@@ -132,8 +132,8 @@ void FootSwitchArea::mouseUp (const MouseEvent& e)
 PeachyAudioProcessorEditor::PeachyAudioProcessorEditor (PeachyAudioProcessor& p)
     : AudioProcessorEditor (&p), proc (p),
       octSwitch (*p.apvts.getParameter ("octave")),
-      preFs  (*p.apvts.getParameter ("preampOn"), p.apvts.getRawParameterValue ("holdMomentary")),
-      fuzzFs (*p.apvts.getParameter ("fuzzOn"),   p.apvts.getRawParameterValue ("holdMomentary"))
+      preFs  (*p.apvts.getParameter ("preampOn"), nullptr),   // « hold = momentary » retire (v2.1.0)
+      fuzzFs (*p.apvts.getParameter ("fuzzOn"),   nullptr)
 {
     background = png (BinaryData::background_png, BinaryData::background_pngSize);
     ledOn      = png (BinaryData::led_on_png, BinaryData::led_on_pngSize);
@@ -189,10 +189,11 @@ PeachyAudioProcessorEditor::PeachyAudioProcessorEditor (PeachyAudioProcessor& p)
     const int defaultW = roundToInt (defaultH * baseW / baseH);
     setResizable (true, true);
     setResizeLimits (defaultW, (int) defaultH, roundToInt (maxH * baseW / baseH), (int) maxH);
+    hostLock.setLimits (defaultW, (int) defaultH, roundToInt (maxH * baseW / baseH), (int) maxH);
     if (auto* cons = getConstrainer()) cons->setFixedAspectRatio ((double) baseW / (double) baseH);
     setOpaque (true);
     setSize (defaultW, (int) defaultH);
-    setScaledHeight (sizeHeight (WigaWindowSize::defaultIndex (JucePlugin_Name, numSizes)));
+    setScaledHeight (sizeHeight (NineHandsWindow::openIndex (JucePlugin_Name, proc.uiSizeIdx.load(), numSizes)));   // taille du projet, sinon taille par defaut
     rebuildCaches();
     startTimerHz (30);
 }
@@ -214,6 +215,7 @@ void PeachyAudioProcessorEditor::setScaledHeight (int h)
 {
     h = jlimit ((int) defaultH, (int) maxH, h);
     setSize (roundToInt ((float) h * baseW / baseH), h);
+    hostLock.enforce();
 }
 
 void PeachyAudioProcessorEditor::setGlowPercent (int pc)
@@ -289,7 +291,7 @@ void PeachyAudioProcessorEditor::useSoftwareRenderer()
    #endif
 }
 
-void PeachyAudioProcessorEditor::parentHierarchyChanged() { useSoftwareRenderer(); }
+void PeachyAudioProcessorEditor::parentHierarchyChanged() { useSoftwareRenderer(); hostLock.track (*this); }
 void PeachyAudioProcessorEditor::visibilityChanged()      { useSoftwareRenderer(); if (isShowing()) repaint(); }
 
 void PeachyAudioProcessorEditor::askRepaint (Rectangle<int> r)
@@ -329,6 +331,7 @@ void PeachyAudioProcessorEditor::timerCallback()
 {
     const double now = Time::getMillisecondCounterHiRes();
     if (getPeer() != lastPeer || now - lastRendererCheckMs > 1000.0) { lastRendererCheckMs = now; useSoftwareRenderer(); }
+    hostLock.track (*this);
 
     if (resizeSettle > 0 && --resizeSettle == 0) rebuildCaches();
     else if (resizeSettle == 0 && now - lastScaleCheckMs > 250.0)
@@ -545,48 +548,21 @@ void PeachyAudioProcessorEditor::buildContextMenu (PopupMenu& menu, int learnIdx
 {
     using namespace NineHandsMenu;
     menu.setLookAndFeel (&menuLnf);
+    const int lt = proc.learnTarget.load();
+    auto ccText = [this] (int i) { const int cc = proc.ccMap[i].load(); return cc >= 0 ? "CC " + String (cc) : String ("not assigned"); };
     if (learnIdx >= 0 && learnIdx < PeachyAudioProcessor::numLearn)
     {
-        // clic droit sur une commande : en-tete de la commande + MIDI Learn en tete du menu
-        const int cc = proc.ccMap[learnIdx].load();
-        const int lt = proc.learnTarget.load();
+        // clic droit sur une commande (tronc commun) : en-tete, MIDI Learn, Clear MIDI, Cancel MIDI learn
         const String name = PeachyAudioProcessor::learnDef (learnIdx).name;
         const int ico = learnIdx < 9 ? icoKnob : icoSwitch;
-        addHeader (menu, menuLnf.f, ico, menuAccent, name, "MIDI: " + (cc >= 0 ? "CC " + String (cc) : String ("not assigned")));
-        menu.addItem (1000 + learnIdx, "MIDI Learn", true, lt == learnIdx);
-        menu.addItem (1100 + learnIdx, "Clear MIDI", cc >= 0);
-        if (lt >= 0) menu.addItem (1200, "Cancel MIDI learn");
-        menu.addSeparator();
+        addHeader (menu, menuLnf.f, ico, menuAccent, name, "MIDI: " + ccText (learnIdx));
+        menu.addItem (1000 + learnIdx, "MIDI Learn: " + name, true, lt == learnIdx);
+        menu.addItem (1100 + learnIdx, "Clear MIDI: " + name, proc.ccMap[learnIdx].load() >= 0);
+        menu.addItem (1200, "Cancel MIDI learn", lt >= 0);
+        return;
     }
-    else
-        addHeader (menu, menuLnf.f, icoPedal, menuAccent, "Peachy", "Preamp + fuzz  v" + String (JucePlugin_VersionString));
 
-    {
-        // Plugin size : taille de cette fenetre + taille par defaut des nouvelles fenetres (comme Octopus)
-        const char* names[numSizes] = { "60 %", "75 %", "100 %" };
-        const int def = WigaWindowSize::defaultIndex (JucePlugin_Name, numSizes);
-        PopupMenu sizes, defSizes;
-        for (int i = 0; i < numSizes; ++i)
-        {
-            sizes.addItem (1 + i, String (names[i]) + (i == 0 ? "  (default)" : ""), true, std::abs (getHeight() - sizeHeight (i)) <= 2);
-            defSizes.addItem (20 + i, String ("Size ") + names[i], true, i == def);
-        }
-        sizes.addSeparator();
-        sizes.addSubMenu ("Default size (new windows)", defSizes);
-        menu.addSubMenu ("Plugin size", sizes);
-    }
-    {
-        PopupMenu glowM;                   // reglage du halo des lumieres (regle des skills, nov. 2026)
-        const int now = roundToInt (glow * 100.0f);
-        for (int i = 0; i < NineHandsGlow::numSteps; ++i)
-        {
-            const int pc = NineHandsGlow::steps[i];
-            glowM.addItem (60 + i, "Glow " + String (pc) + " %" + (pc == 100 ? "  (default)" : ""), true, now == pc);
-        }
-        menu.addSubMenu ("Glow (halo of the lights)", glowM);
-    }
-    menu.addSeparator();
-
+    addHeader (menu, menuLnf.f, icoPedal, menuAccent, "Peachy", "Preamp + fuzz  v" + String (JucePlugin_VersionString));
     PopupMenu factory;
     for (int i = 0; i < PeachyAudioProcessor::getNumFactoryPresets(); ++i)
         factory.addItem (100 + i, "Preset " + String (i + 1) + "  " + PeachyAudioProcessor::getFactoryPreset (i).name, true, proc.currentPreset.load() == i);
@@ -595,8 +571,8 @@ void PeachyAudioProcessorEditor::buildContextMenu (PopupMenu& menu, int learnIdx
     for (int slot = 1; slot <= 9; ++slot)
     {
         const bool exists = proc.hasUserPreset (slot);
-        load.addItem (200 + slot, "User preset " + String (slot) + (exists ? "" : "  (empty)"), exists, proc.currentPreset.load() == 100 + slot);
-        save.addItem (300 + slot, "Save user preset " + String (slot) + (exists ? "  (overwrite)" : ""));
+        load.addItem (200 + slot, "User " + String (slot) + (exists ? "" : "  (empty)"), exists, proc.currentPreset.load() == 100 + slot);
+        save.addItem (300 + slot, "User " + String (slot) + (exists ? "  (overwrite)" : ""));
     }
     menu.addSubMenu ("Load user preset", load);
     menu.addSubMenu ("Save user preset", save);
@@ -607,30 +583,26 @@ void PeachyAudioProcessorEditor::buildContextMenu (PopupMenu& menu, int learnIdx
     const char* gateHelp[4] = { "Gate off", "Gate light (default)", "Gate medium", "Gate strong (noisy pickups / hum)" };
     for (int i = 0; i < 4; ++i) gate.addItem (50 + i, gateHelp[i], true, gNow == i);
     menu.addSubMenu ("Noise gate", gate);
-
-    PopupMenu settings;
-    settings.addItem (40, "Hold footswitch = momentary", true, proc.raw ("holdMomentary") > 0.5f);
-    settings.addSeparator();
-    settings.addItem (41, "MIDI footswitches latching (127 = on / 0 = off)", true, proc.raw ("midiFsMode") < 0.5f);
-    settings.addItem (42, "MIDI footswitches momentary (toggle each press)", true, proc.raw ("midiFsMode") > 0.5f);
-    menu.addSubMenu ("Settings", settings);
+    menu.addSeparator();
 
     PopupMenu midi;
+    midi.addSectionHeader ("MIDI Learn");
     for (int i = 0; i < PeachyAudioProcessor::numLearn; ++i)
-    {
-        const int cc = proc.ccMap[i].load();
-        midi.addItem (1000 + i, "MIDI Learn " + String (PeachyAudioProcessor::learnDef (i).name)
-                                 + "  (" + (cc >= 0 ? "CC " + String (cc) : String ("none")) + ")",
-                      true, proc.learnTarget.load() == i);
-    }
+        midi.addItem (1000 + i, "Learn: " + String (PeachyAudioProcessor::learnDef (i).name) + "  (" + ccText (i) + ")", true, lt == i);
     midi.addSeparator();
-    if (proc.learnTarget.load() >= 0) midi.addItem (1200, "Cancel MIDI learn");
+    midi.addItem (1200, "Cancel MIDI learn", lt >= 0);
     midi.addItem (1201, "Clear all MIDI assignments");
     midi.addSeparator();
-    midi.addItem (914, "MIDI Program Change 1-10 = factory presets", false);
+    NineHandsWindow::addMidiFootswitchMode (midi, proc.raw ("midiFsMode") < 0.5f);
+    midi.addSeparator();
+    NineHandsWindow::addProgramChangeInfo (midi);
     menu.addSubMenu ("MIDI", midi);
     menu.addSeparator();
-    menu.addItem (999, "Info  Peachy v" + String (JucePlugin_VersionString) + "  NINE HANDS | DSP", false);
+
+    const char* names[numSizes] = { "60 %", "75 %", "100 %" };
+    const int heights[numSizes] = { sizeHeight (0), sizeHeight (1), sizeHeight (2) };
+    menu.addSubMenu ("Plugin size", NineHandsWindow::sizeMenu (JucePlugin_Name, numSizes, names, heights, getHeight()));
+    menu.addSubMenu ("Glow intensity", NineHandsWindow::glowMenu (roundToInt (glow * 100.0f)));
 }
 
 void PeachyAudioProcessorEditor::showContextMenu (const MouseEvent*, int learnIdx)
@@ -644,21 +616,13 @@ void PeachyAudioProcessorEditor::showContextMenu (const MouseEvent*, int learnId
 void PeachyAudioProcessorEditor::handleMenu (int r)
 {
     auto& pr = proc;
-    if      (r >= 1 && r < 1 + numSizes) setScaledHeight (sizeHeight (r - 1));
-    else if (r >= 20 && r < 20 + numSizes)
-    {
-        WigaWindowSize::setDefaultIndex (JucePlugin_Name, r - 20);   // toutes les nouvelles fenetres de ce plugin
-        setScaledHeight (sizeHeight (r - 20));                        // et cette fenetre tout de suite
-    }
-    else if (r == 40) pr.setParamValue ("holdMomentary", pr.raw ("holdMomentary") > 0.5f ? 0.0f : 1.0f);
-    else if (r == 41) pr.setParamValue ("midiFsMode", 0.0f);
-    else if (r == 42) pr.setParamValue ("midiFsMode", 1.0f);
+    int inst = pr.uiSizeIdx.load();
+    const int sz = NineHandsWindow::handleSize (r, JucePlugin_Name, numSizes, inst);
+    if (sz >= 0) { pr.uiSizeIdx = inst; setScaledHeight (sizeHeight (sz)); return; }
+    if (const int pc = NineHandsWindow::handleGlow (r, JucePlugin_Name)) { setGlowPercent (pc); flash ("Glow  " + String (pc) + " %"); return; }
+    if      (r == NineHandsWindow::idLatch)     pr.setParamValue ("midiFsMode", 0.0f);
+    else if (r == NineHandsWindow::idMomentary) pr.setParamValue ("midiFsMode", 1.0f);
     else if (r >= 50 && r <= 53) pr.setParamValue ("gate", (float) (r - 50));
-    else if (r >= 60 && r < 60 + NineHandsGlow::numSteps)
-    {
-        setGlowPercent (NineHandsGlow::steps[r - 60]);
-        flash ("Glow  " + String (NineHandsGlow::steps[r - 60]) + " %");
-    }
     else if (r >= 100 && r < 200) pr.applyFactoryPreset (r - 100);
     else if (r > 200 && r < 300)  pr.loadUserPreset (r - 200);
     else if (r > 300 && r < 400)  pr.saveUserPreset (r - 300);

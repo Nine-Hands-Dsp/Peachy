@@ -3,6 +3,7 @@
 #include "PluginProcessor.h"
 #include "NHKnob.h"
 #include "NineHandsMenu.h"
+#include "NineHandsWindow.h"
 
 //==============================================================================
 // Peachy v2 (NINE HANDS | DSP) : pack design v7. Fond 2350 x 1800 (ombres cuites), repere 1175 x 900 unites.
@@ -70,9 +71,11 @@ public:
     static int sizeHeight (int idx);
     void setScaledHeight (int h);
     void setGlowPercent (int pc);
+    juce::PopupMenu buildContextMenu (int learnIdx = -1) { juce::PopupMenu m; buildContextMenu (m, learnIdx); return m; }   // outil de controle des menus
     void showMenuForTest (int learnIdx, juce::PopupMenu& out) { buildContextMenu (out, learnIdx); }   // tools/render
     void buildPresetMenu (juce::PopupMenu&);
     NineHandsMenu::MenuLnf menuLnf;
+    NineHandsWindow::HostLock hostLock;    // fenetre du DAW : jamais sous 60 %, jamais au-dela de 150 %
     float glow = 1.0f;
 
 private:

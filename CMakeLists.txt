@@ -6,7 +6,7 @@ if(APPLE)
   set(CMAKE_OSX_DEPLOYMENT_TARGET "10.15" CACHE STRING "" FORCE)
 endif()
 
-project(Peachy VERSION 2.0.1)
+project(Peachy VERSION 2.1.0)
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -54,7 +54,7 @@ juce_add_plugin(Peachy
   FORMATS VST3
   VST3_CATEGORIES Fx Distortion
   PRODUCT_NAME "Peachy"
-  VERSION 2.0.1
+  VERSION 2.1.0
   DESCRIPTION "Preamp + fuzz (NAM captures) - double pedal format"
   IS_SYNTH FALSE
   NEEDS_MIDI_INPUT TRUE
@@ -65,6 +65,17 @@ juce_add_plugin(Peachy
 
 file(GLOB NAM_SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/third_party/NAM/*.cpp ${CMAKE_CURRENT_SOURCE_DIR}/third_party/NAM/*/*.cpp)
 target_sources(Peachy PRIVATE PluginProcessor.cpp PluginEditor.cpp PeachyDSP.cpp ${NAM_SOURCES})
+
+# verrou de taille de la fenetre du DAW (jamais sous 60 %, jamais au-dela de 150 %)
+if(APPLE)
+  target_sources(Peachy PRIVATE WindowMinSize.mm)
+  target_link_libraries(Peachy PRIVATE "-framework Cocoa")
+else()
+  target_sources(Peachy PRIVATE WindowMinSize.cpp)
+endif()
+if(WIN32)
+  target_link_libraries(Peachy PRIVATE comctl32 user32)
+endif()
 target_include_directories(Peachy PRIVATE
   ${CMAKE_CURRENT_SOURCE_DIR}
   ${CMAKE_CURRENT_SOURCE_DIR}/third_party
