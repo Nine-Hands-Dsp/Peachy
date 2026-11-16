@@ -565,7 +565,7 @@ void PeachyAudioProcessorEditor::buildContextMenu (PopupMenu& menu, int learnIdx
     addHeader (menu, menuLnf.f, icoPedal, menuAccent, "Peachy", "Preamp + fuzz  v" + String (JucePlugin_VersionString));
     PopupMenu factory;
     for (int i = 0; i < PeachyAudioProcessor::getNumFactoryPresets(); ++i)
-        factory.addItem (100 + i, String (i + 1) + ". " + PeachyAudioProcessor::getFactoryPreset (i).name, true, proc.currentPreset.load() == i);
+        NineHandsMenu::addItem (factory, 100 + i, String (i + 1) + ". " + PeachyAudioProcessor::getFactoryPreset (i).name, icoDot, true, proc.currentPreset.load() == i);
     menu.addSubMenu ("Factory presets", factory);
     PopupMenu load, save;
     for (int slot = 1; slot <= 9; ++slot)
