@@ -53,8 +53,8 @@ const PeachyAudioProcessor::LearnDef& PeachyAudioProcessor::learnDef (int i)
         { "tone",       "Tone (fuzz)",      -1, learnContinuous, 0, ccFirstKnob + 7 },
         { "presence",   "Presence",         -1, learnContinuous, 0, ccFirstKnob + 8 },
         { "octave",     "Octave",           -1, learnToggle,     2, ccOctave },   // >= 64 : octave
-        { "preampOn",   "Preamp footswitch", -1, learnFootswitch, 0, ccPreampFs },
-        { "fuzzOn",     "Fuzz footswitch",  -1, learnFootswitch, 0, ccFuzzFs },
+        { "preampOn",   "Preamp", -1, learnFootswitch, 0, ccPreampFs },
+        { "fuzzOn",     "Fuzz",  -1, learnFootswitch, 0, ccFuzzFs },
     };
     return defs[jlimit (0, numLearn - 1, i)];
 }
@@ -180,7 +180,7 @@ float PeachyAudioProcessor::mapCC (int k, float raw01)
 
 void PeachyAudioProcessor::handleMidi (MidiBuffer& midi)
 {
-    const bool latching = rawAt (14) < 0.5f;
+    const bool latching = true;                     // footswitchs MIDI : 127 = on / 0 = off (menu final)
     for (const auto meta : midi)
     {
         const auto m = meta.getMessage();
@@ -252,12 +252,6 @@ void PeachyAudioProcessor::handleMidi (MidiBuffer& midi)
             }
             else known = false;
             if (known) { lastMidiCC = cc; lastMidiValue = v; ++midiCounter; }
-        }
-        else if (m.isProgramChange())
-        {
-            const int pc = m.getProgramChangeNumber();
-            if (pc < getNumFactoryPresets()) { pendingPreset = pc; triggerAsyncUpdate(); }
-            lastMidiProgram = pc; lastMidiCC = -2; ++midiCounter;
         }
     }
     midi.clear();

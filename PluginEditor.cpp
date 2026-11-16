@@ -565,7 +565,7 @@ void PeachyAudioProcessorEditor::buildContextMenu (PopupMenu& menu, int learnIdx
     addHeader (menu, menuLnf.f, icoPedal, menuAccent, "Peachy", "Preamp + fuzz  v" + String (JucePlugin_VersionString));
     PopupMenu factory;
     for (int i = 0; i < PeachyAudioProcessor::getNumFactoryPresets(); ++i)
-        factory.addItem (100 + i, "Preset " + String (i + 1) + "  " + PeachyAudioProcessor::getFactoryPreset (i).name, true, proc.currentPreset.load() == i);
+        factory.addItem (100 + i, String (i + 1) + ". " + PeachyAudioProcessor::getFactoryPreset (i).name, true, proc.currentPreset.load() == i);
     menu.addSubMenu ("Factory presets", factory);
     PopupMenu load, save;
     for (int slot = 1; slot <= 9; ++slot)
@@ -578,24 +578,21 @@ void PeachyAudioProcessorEditor::buildContextMenu (PopupMenu& menu, int learnIdx
     menu.addSubMenu ("Save user preset", save);
     menu.addSeparator();
 
-    PopupMenu gate;
+    PopupMenu settings;
     const int gNow = jlimit (0, 3, roundToInt (proc.raw ("gate")));
-    const char* gateHelp[4] = { "Gate off", "Gate light (default)", "Gate medium", "Gate strong (noisy pickups / hum)" };
-    for (int i = 0; i < 4; ++i) gate.addItem (50 + i, gateHelp[i], true, gNow == i);
-    menu.addSubMenu ("Noise gate", gate);
+    const char* gateNames[4] = { "Off", "Light (default)", "Medium", "Strong" };
+    settings.addSectionHeader ("Noise gate");
+    for (int i = 0; i < 4; ++i) NineHandsMenu::addItem (settings, 50 + i, gateNames[i], i == 0 ? icoDot : icoGate, true, gNow == i);
+    menu.addSubMenu ("Settings", settings);
     menu.addSeparator();
 
     PopupMenu midi;
     midi.addSectionHeader ("MIDI Learn");
     for (int i = 0; i < PeachyAudioProcessor::numLearn; ++i)
-        midi.addItem (1000 + i, "Learn: " + String (PeachyAudioProcessor::learnDef (i).name) + "  (" + ccText (i) + ")", true, lt == i);
+        NineHandsMenu::addItem (midi, 1000 + i, "Learn: " + String (PeachyAudioProcessor::learnDef (i).name) + " (" + ccText (i) + ")", i >= 10 ? icoSwitch : icoMidi, true, lt == i);
     midi.addSeparator();
     midi.addItem (1200, "Cancel MIDI learn", lt >= 0);
     midi.addItem (1201, "Clear all MIDI assignments");
-    midi.addSeparator();
-    NineHandsWindow::addMidiFootswitchMode (midi, proc.raw ("midiFsMode") < 0.5f);
-    midi.addSeparator();
-    NineHandsWindow::addProgramChangeInfo (midi);
     menu.addSubMenu ("MIDI", midi);
     menu.addSeparator();
 
