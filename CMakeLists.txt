@@ -54,7 +54,7 @@ juce_add_plugin(Peachy
   FORMATS VST3
   VST3_CATEGORIES Fx Distortion
   PRODUCT_NAME "Peachy"
-  VERSION 2.1.0
+  VERSION ${PROJECT_VERSION}
   DESCRIPTION "Preamp + fuzz (NAM captures) - double pedal format"
   IS_SYNTH FALSE
   NEEDS_MIDI_INPUT TRUE
